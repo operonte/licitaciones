@@ -4,16 +4,26 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
 // Load signing properties from android/key.properties at repo root (optional)
 val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreProperties = java.util.Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+val keystoreProperties: Map<String, String> = if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.readLines()
+        .mapNotNull { line ->
+            val trimmed = line.trim()
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) return@mapNotNull null
+            val parts = trimmed.split("=", limit = 2)
+            if (parts.size == 2) parts[0].trim() to parts[1].trim() else null
+        }
+        .toMap()
+} else {
+    emptyMap()
 }
 
 android {
     namespace = "com.security.licitaciones.licitaciones"
-    compileSdk = flutter.compileSdkVersion
+    // Set a modern compileSdk to satisfy Android library dependencies
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -39,10 +49,13 @@ android {
             if (keystorePropertiesFile.exists()) {
                 // create or configure the release signing config
                 signingConfigs.create("release") {
-                    keyAlias = keystoreProperties.getProperty("keyAlias")
-                    keyPassword = keystoreProperties.getProperty("keyPassword")
-                    storeFile = file(keystoreProperties.getProperty("storeFile"))
-                    storePassword = keystoreProperties.getProperty("storePassword")
+                    keyAlias = keystoreProperties["keyAlias"]
+                    keyPassword = keystoreProperties["keyPassword"]
+                    val storePath = keystoreProperties["storeFile"]
+                    if (!storePath.isNullOrBlank()) {
+                        storeFile = file(storePath)
+                    }
+                    storePassword = keystoreProperties["storePassword"]
                 }
                 signingConfig = signingConfigs.getByName("release")
             } else {
