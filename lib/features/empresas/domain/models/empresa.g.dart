@@ -17,34 +17,40 @@ const EmpresaSchema = CollectionSchema(
   name: r'Empresa',
   id: 6619396595510192979,
   properties: {
-    r'estadoRelacion': PropertySchema(
+    r'contactos': PropertySchema(
       id: 0,
+      name: r'contactos',
+      type: IsarType.objectList,
+      target: r'Contacto',
+    ),
+    r'estadoRelacion': PropertySchema(
+      id: 1,
       name: r'estadoRelacion',
       type: IsarType.byte,
       enumMap: _EmpresaestadoRelacionEnumValueMap,
     ),
     r'fechaRegistro': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'fechaRegistro',
       type: IsarType.dateTime,
     ),
     r'id': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'id',
       type: IsarType.string,
     ),
     r'razonSocial': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'razonSocial',
       type: IsarType.string,
     ),
     r'rubro': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'rubro',
       type: IsarType.string,
     ),
     r'rut': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'rut',
       type: IsarType.string,
     )
@@ -70,7 +76,7 @@ const EmpresaSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'Contacto': ContactoSchema},
   getId: _empresaGetId,
   getLinks: _empresaGetLinks,
   attach: _empresaAttach,
@@ -83,6 +89,14 @@ int _empresaEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.contactos.length * 3;
+  {
+    final offsets = allOffsets[Contacto]!;
+    for (var i = 0; i < object.contactos.length; i++) {
+      final value = object.contactos[i];
+      bytesCount += ContactoSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.razonSocial.length * 3;
   bytesCount += 3 + object.rubro.length * 3;
@@ -96,12 +110,18 @@ void _empresaSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeByte(offsets[0], object.estadoRelacion.index);
-  writer.writeDateTime(offsets[1], object.fechaRegistro);
-  writer.writeString(offsets[2], object.id);
-  writer.writeString(offsets[3], object.razonSocial);
-  writer.writeString(offsets[4], object.rubro);
-  writer.writeString(offsets[5], object.rut);
+  writer.writeObjectList<Contacto>(
+    offsets[0],
+    allOffsets,
+    ContactoSchema.serialize,
+    object.contactos,
+  );
+  writer.writeByte(offsets[1], object.estadoRelacion.index);
+  writer.writeDateTime(offsets[2], object.fechaRegistro);
+  writer.writeString(offsets[3], object.id);
+  writer.writeString(offsets[4], object.razonSocial);
+  writer.writeString(offsets[5], object.rubro);
+  writer.writeString(offsets[6], object.rut);
 }
 
 Empresa _empresaDeserialize(
@@ -111,15 +131,22 @@ Empresa _empresaDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Empresa(
+    contactos: reader.readObjectList<Contacto>(
+          offsets[0],
+          ContactoSchema.deserialize,
+          allOffsets,
+          Contacto(),
+        ) ??
+        const [],
     estadoRelacion:
-        _EmpresaestadoRelacionValueEnumMap[reader.readByteOrNull(offsets[0])] ??
+        _EmpresaestadoRelacionValueEnumMap[reader.readByteOrNull(offsets[1])] ??
             EstadoRelacion.prospecto,
-    fechaRegistro: reader.readDateTime(offsets[1]),
-    id: reader.readString(offsets[2]),
+    fechaRegistro: reader.readDateTime(offsets[2]),
+    id: reader.readString(offsets[3]),
     localId: id,
-    razonSocial: reader.readString(offsets[3]),
-    rubro: reader.readString(offsets[4]),
-    rut: reader.readString(offsets[5]),
+    razonSocial: reader.readString(offsets[4]),
+    rubro: reader.readString(offsets[5]),
+    rut: reader.readString(offsets[6]),
   );
   return object;
 }
@@ -132,18 +159,26 @@ P _empresaDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readObjectList<Contacto>(
+            offset,
+            ContactoSchema.deserialize,
+            allOffsets,
+            Contacto(),
+          ) ??
+          const []) as P;
+    case 1:
       return (_EmpresaestadoRelacionValueEnumMap[
               reader.readByteOrNull(offset)] ??
           EstadoRelacion.prospecto) as P;
-    case 1:
-      return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -351,6 +386,91 @@ extension EmpresaQueryWhere on QueryBuilder<Empresa, Empresa, QWhereClause> {
 
 extension EmpresaQueryFilter
     on QueryBuilder<Empresa, Empresa, QFilterCondition> {
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition>
+      contactosLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'contactos',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QAfterFilterCondition> estadoRelacionEqualTo(
       EstadoRelacion value) {
     return QueryBuilder.apply(this, (query) {
@@ -1050,7 +1170,14 @@ extension EmpresaQueryFilter
 }
 
 extension EmpresaQueryObject
-    on QueryBuilder<Empresa, Empresa, QFilterCondition> {}
+    on QueryBuilder<Empresa, Empresa, QFilterCondition> {
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> contactosElement(
+      FilterQuery<Contacto> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'contactos');
+    });
+  }
+}
 
 extension EmpresaQueryLinks
     on QueryBuilder<Empresa, Empresa, QFilterCondition> {}
@@ -1264,6 +1391,12 @@ extension EmpresaQueryProperty
   QueryBuilder<Empresa, int, QQueryOperations> localIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'localId');
+    });
+  }
+
+  QueryBuilder<Empresa, List<Contacto>, QQueryOperations> contactosProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'contactos');
     });
   }
 

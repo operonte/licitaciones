@@ -24,6 +24,9 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   final _rubroController = TextEditingController();
   EstadoRelacion _estadoRelacionSelected = EstadoRelacion.prospecto;
 
+  // Contactos de Empresa (máximo 3)
+  final List<Map<String, TextEditingController>> _contactosEmpresaControllers = [];
+
   // Sucursal section toggle
   bool _agregarSucursal = false;
 
@@ -32,24 +35,45 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   final _direccionController = TextEditingController();
   final _guardiasController = TextEditingController();
 
-  // Dynamic Contact list
+  // Dynamic Contact list for Establecimiento (máximo 3)
   final List<Map<String, TextEditingController>> _contactoControllers = [];
 
   @override
   void initState() {
     super.initState();
-    // Agregar un primer contacto por defecto si se habilita la sucursal
-    _agregarNuevoContacto();
+  }
+
+  void _agregarNuevoContactoEmpresa() {
+    setState(() {
+      if (_contactosEmpresaControllers.length < 3) {
+        _contactosEmpresaControllers.add({
+          'nombre': TextEditingController(),
+          'cargo': TextEditingController(),
+          'telefono': TextEditingController(),
+          'email': TextEditingController(),
+        });
+      }
+    });
+  }
+
+  void _eliminarContactoEmpresa(int index) {
+    setState(() {
+      _contactosEmpresaControllers[index]
+          .forEach((key, controller) => controller.dispose());
+      _contactosEmpresaControllers.removeAt(index);
+    });
   }
 
   void _agregarNuevoContacto() {
     setState(() {
-      _contactoControllers.add({
-        'nombre': TextEditingController(),
-        'cargo': TextEditingController(),
-        'telefono': TextEditingController(),
-        'email': TextEditingController(),
-      });
+      if (_contactoControllers.length < 3) {
+        _contactoControllers.add({
+          'nombre': TextEditingController(),
+          'cargo': TextEditingController(),
+          'telefono': TextEditingController(),
+          'email': TextEditingController(),
+        });
+      }
     });
   }
 
@@ -68,6 +92,9 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
     _nombreSucursalController.dispose();
     _direccionController.dispose();
     _guardiasController.dispose();
+    for (var contacto in _contactosEmpresaControllers) {
+      contacto.forEach((key, controller) => controller.dispose());
+    }
     for (var contacto in _contactoControllers) {
       contacto.forEach((key, controller) => controller.dispose());
     }
@@ -79,7 +106,18 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
 
     final empresaId = _uuid.v4();
 
-    // 1. Guardar Empresa
+    // Extraer contactos de empresa
+    final contactosEmpresa = _contactosEmpresaControllers
+        .where((controllers) => controllers['nombre']!.text.trim().isNotEmpty)
+        .map((controllers) => Contacto(
+              nombre: controllers['nombre']!.text.trim(),
+              cargo: controllers['cargo']!.text.trim(),
+              telefono: controllers['telefono']!.text.trim(),
+              email: controllers['email']!.text.trim(),
+            ))
+        .toList();
+
+    // 1. Guardar Empresa con contactos
     final nuevaEmpresa = Empresa(
       id: empresaId,
       razonSocial: _razonSocialController.text.trim(),
@@ -87,6 +125,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
       rubro: _rubroController.text.trim(),
       estadoRelacion: _estadoRelacionSelected,
       fechaRegistro: DateTime.now(),
+      contactos: contactosEmpresa,
     );
 
     await ref.read(empresasProvider.notifier).guardarEmpresa(nuevaEmpresa);
@@ -211,6 +250,118 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
 
             const SizedBox(height: 16),
 
+            // Sección Contactos de Empresa (máximo 3)
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Contactos de Empresa',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        if (_contactosEmpresaControllers.length < 3)
+                          TextButton.icon(
+                            onPressed: _agregarNuevoContactoEmpresa,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Agregar'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Máximo 3 contactos por empresa',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                    const Divider(),
+                    if (_contactosEmpresaControllers.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'No hay contactos agregados.',
+                          style: TextStyle(color: Colors.grey[500], fontStyle: FontStyle.italic),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _contactosEmpresaControllers.length,
+                        itemBuilder: (context, index) {
+                          final contactMap = _contactosEmpresaControllers[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Contacto #${index + 1}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () => _eliminarContactoEmpresa(index),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: contactMap['nombre'],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nombre *',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: contactMap['cargo'],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Cargo / Puesto *',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: contactMap['telefono'],
+                                  keyboardType: TextInputType.phone,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Teléfono',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: contactMap['email'],
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             // Toggle para Sucursal
             SwitchListTile(
               title: const Text(
@@ -291,20 +442,26 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                             'Contactos en Sucursal',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
-                          TextButton.icon(
-                            onPressed: _agregarNuevoContacto,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Agregar Contacto'),
-                          ),
+                          if (_contactoControllers.length < 3)
+                            TextButton.icon(
+                              onPressed: _agregarNuevoContacto,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Agregar'),
+                            ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Máximo 3 contactos por sucursal',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const Divider(),
                       if (_contactoControllers.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
                             'No hay contactos registrados.',
-                            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                            style: TextStyle(color: Colors.grey[500], fontStyle: FontStyle.italic),
                           ),
                         )
                       else

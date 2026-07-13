@@ -11,6 +11,13 @@ void main() {
   group('Pruebas de Modelos (Serialización JSON)', () {
     test('Empresa JSON serialization', () {
       final fecha = DateTime(2026, 7, 13);
+      final contactoEmpresa = Contacto(
+        nombre: 'María García',
+        cargo: 'Directora Comercial',
+        telefono: '+56987654321',
+        email: 'maria@seguridad.cl',
+      );
+
       final empresa = Empresa(
         id: 'uuid-empresa-123',
         razonSocial: 'Seguridad Industrial S.A.',
@@ -18,6 +25,7 @@ void main() {
         rubro: 'Minería',
         estadoRelacion: EstadoRelacion.prospecto,
         fechaRegistro: fecha,
+        contactos: [contactoEmpresa],
       );
 
       final json = empresa.toJson();
@@ -25,12 +33,16 @@ void main() {
       expect(json['razonSocial'], 'Seguridad Industrial S.A.');
       expect(json['estadoRelacion'], 'prospecto');
       expect(json['fechaRegistro'], fecha.toIso8601String());
+      expect(json['contactos'].length, 1);
+      expect(json['contactos'].first['nombre'], 'María García');
 
       final deJson = Empresa.fromJson(json);
       expect(deJson.id, empresa.id);
       expect(deJson.razonSocial, empresa.razonSocial);
       expect(deJson.estadoRelacion, empresa.estadoRelacion);
       expect(deJson.fechaRegistro, empresa.fechaRegistro);
+      expect(deJson.contactos.length, 1);
+      expect(deJson.contactos.first.nombre, 'María García');
     });
 
     test('Establecimiento y Contacto JSON serialization', () {
@@ -117,6 +129,13 @@ void main() {
     });
 
     test('CRUD de Empresas', () async {
+      final contactoEmpresa = Contacto(
+        nombre: 'Pedro López',
+        cargo: 'Gerente General',
+        telefono: '555-1234',
+        email: 'pedro@empresa.cl',
+      );
+
       final empresa = Empresa(
         id: 'uuid-1',
         razonSocial: 'Empresa Test',
@@ -124,6 +143,7 @@ void main() {
         rubro: 'Retail',
         estadoRelacion: EstadoRelacion.prospecto,
         fechaRegistro: DateTime.now(),
+        contactos: [contactoEmpresa],
       );
 
       // Create
@@ -134,6 +154,8 @@ void main() {
       expect(obtenida, isNotNull);
       expect(obtenida!.razonSocial, 'Empresa Test');
       expect(obtenida.rut, '12.345.678-9');
+      expect(obtenida.contactos.length, 1);
+      expect(obtenida.contactos.first.nombre, 'Pedro López');
 
       // Update
       final empresaModificada = Empresa(
@@ -144,12 +166,14 @@ void main() {
         rubro: obtenida.rubro,
         estadoRelacion: EstadoRelacion.asesorado,
         fechaRegistro: obtenida.fechaRegistro,
+        contactos: obtenida.contactos,
       );
       await service.guardarEmpresa(empresaModificada);
 
       final obtenidaModificada = await service.obtenerEmpresaPorId('uuid-1');
       expect(obtenidaModificada!.razonSocial, 'Empresa Test Modificada');
       expect(obtenidaModificada.estadoRelacion, EstadoRelacion.asesorado);
+      expect(obtenidaModificada.contactos.length, 1);
 
       // Delete
       final eliminado = await service.eliminarEmpresaPorId('uuid-1');

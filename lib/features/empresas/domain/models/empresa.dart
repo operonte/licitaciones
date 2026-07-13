@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:licitaciones/features/establecimientos/domain/models/contacto.dart';
 
 part 'empresa.g.dart';
 
@@ -25,6 +26,9 @@ class Empresa {
 
   final DateTime fechaRegistro;
 
+  /// Contactos de la empresa (máximo 3)
+  final List<Contacto> contactos;
+
   Empresa({
     this.localId,
     required this.id,
@@ -33,6 +37,7 @@ class Empresa {
     required this.rubro,
     required this.estadoRelacion,
     required this.fechaRegistro,
+    this.contactos = const [],
   });
 
   factory Empresa.fromJson(Map<String, dynamic> json) => Empresa(
@@ -46,6 +51,10 @@ class Empresa {
           orElse: () => EstadoRelacion.prospecto,
         ),
         fechaRegistro: DateTime.parse(json['fechaRegistro'] as String),
+        contactos: (json['contactos'] as List<dynamic>?)
+                ?.map((c) => Contacto.fromJson(c as Map<String, dynamic>))
+                .toList() ??
+            [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -56,5 +65,6 @@ class Empresa {
         'rubro': rubro,
         'estadoRelacion': estadoRelacion.name,
         'fechaRegistro': fechaRegistro.toIso8601String(),
+        'contactos': contactos.map((c) => c.toJson()).toList(),
       };
 }
