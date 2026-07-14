@@ -29,6 +29,9 @@ class Empresa {
   /// Contactos de la empresa (máximo 3)
   final List<Contacto> contactos;
 
+  /// Notas de visitas y seguimiento comercial
+  final String notasVisita;
+
   Empresa({
     this.localId,
     required this.id,
@@ -38,6 +41,7 @@ class Empresa {
     required this.estadoRelacion,
     required this.fechaRegistro,
     this.contactos = const [],
+    this.notasVisita = '',
   });
 
   factory Empresa.fromJson(Map<String, dynamic> json) => Empresa(
@@ -55,6 +59,7 @@ class Empresa {
                 ?.map((c) => Contacto.fromJson(c as Map<String, dynamic>))
                 .toList() ??
             [],
+        notasVisita: json['notasVisita'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -66,5 +71,6 @@ class Empresa {
         'estadoRelacion': estadoRelacion.name,
         'fechaRegistro': fechaRegistro.toIso8601String(),
         'contactos': contactos.map((c) => c.toJson()).toList(),
+        'notasVisita': notasVisita,
       };
 }

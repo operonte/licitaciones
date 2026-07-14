@@ -39,18 +39,23 @@ const EmpresaSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'razonSocial': PropertySchema(
+    r'notasVisita': PropertySchema(
       id: 4,
+      name: r'notasVisita',
+      type: IsarType.string,
+    ),
+    r'razonSocial': PropertySchema(
+      id: 5,
       name: r'razonSocial',
       type: IsarType.string,
     ),
     r'rubro': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'rubro',
       type: IsarType.string,
     ),
     r'rut': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'rut',
       type: IsarType.string,
     )
@@ -98,6 +103,7 @@ int _empresaEstimateSize(
     }
   }
   bytesCount += 3 + object.id.length * 3;
+  bytesCount += 3 + object.notasVisita.length * 3;
   bytesCount += 3 + object.razonSocial.length * 3;
   bytesCount += 3 + object.rubro.length * 3;
   bytesCount += 3 + object.rut.length * 3;
@@ -119,9 +125,10 @@ void _empresaSerialize(
   writer.writeByte(offsets[1], object.estadoRelacion.index);
   writer.writeDateTime(offsets[2], object.fechaRegistro);
   writer.writeString(offsets[3], object.id);
-  writer.writeString(offsets[4], object.razonSocial);
-  writer.writeString(offsets[5], object.rubro);
-  writer.writeString(offsets[6], object.rut);
+  writer.writeString(offsets[4], object.notasVisita);
+  writer.writeString(offsets[5], object.razonSocial);
+  writer.writeString(offsets[6], object.rubro);
+  writer.writeString(offsets[7], object.rut);
 }
 
 Empresa _empresaDeserialize(
@@ -144,9 +151,10 @@ Empresa _empresaDeserialize(
     fechaRegistro: reader.readDateTime(offsets[2]),
     id: reader.readString(offsets[3]),
     localId: id,
-    razonSocial: reader.readString(offsets[4]),
-    rubro: reader.readString(offsets[5]),
-    rut: reader.readString(offsets[6]),
+    notasVisita: reader.readStringOrNull(offsets[4]) ?? '',
+    razonSocial: reader.readString(offsets[5]),
+    rubro: reader.readString(offsets[6]),
+    rut: reader.readString(offsets[7]),
   );
   return object;
 }
@@ -175,10 +183,12 @@ P _empresaDeserializeProp<P>(
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -777,6 +787,137 @@ extension EmpresaQueryFilter
     });
   }
 
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notasVisita',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notasVisita',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notasVisita',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> notasVisitaIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notasVisita',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition>
+      notasVisitaIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notasVisita',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QAfterFilterCondition> razonSocialEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1219,6 +1360,18 @@ extension EmpresaQuerySortBy on QueryBuilder<Empresa, Empresa, QSortBy> {
     });
   }
 
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByNotasVisita() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notasVisita', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByNotasVisitaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notasVisita', Sort.desc);
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByRazonSocial() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'razonSocial', Sort.asc);
@@ -1306,6 +1459,18 @@ extension EmpresaQuerySortThenBy
     });
   }
 
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByNotasVisita() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notasVisita', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByNotasVisitaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notasVisita', Sort.desc);
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByRazonSocial() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'razonSocial', Sort.asc);
@@ -1364,6 +1529,13 @@ extension EmpresaQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Empresa, Empresa, QDistinct> distinctByNotasVisita(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notasVisita', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QDistinct> distinctByRazonSocial(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1416,6 +1588,12 @@ extension EmpresaQueryProperty
   QueryBuilder<Empresa, String, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Empresa, String, QQueryOperations> notasVisitaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notasVisita');
     });
   }
 

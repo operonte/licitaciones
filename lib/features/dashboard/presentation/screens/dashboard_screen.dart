@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/enum_labels.dart';
+import '../../../../core/utils/empresa_lookup.dart';
+import '../../../../core/utils/export_service.dart';
 import '../../../empresas/presentation/providers/empresas_provider.dart';
-import '../../../establecimientos/presentation/providers/establecimientos_provider.dart';
 import '../../../licitaciones/presentation/providers/licitaciones_provider.dart';
+import '../../../visitas/presentation/providers/visitas_provider.dart';
+import '../../../tareas/presentation/providers/tareas_provider.dart';
 import '../../../licitaciones/domain/models/licitacion.dart';
+import '../../../empresas/domain/models/empresa.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -11,8 +17,32 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final empresas = ref.watch(empresasProvider);
-    final establecimientos = ref.watch(establecimientosProvider);
     final proximasLicitaciones = ref.watch(proximasLicitacionesProvider);
+    final visitas = ref.watch(visitasProvider);
+    final tareas = ref.watch(tareasProvider);
+    final tareasVencidas = ref.watch(tareasVencidasProvider);
+    final proximasVisitas = ref.watch(proximasVisitasProvider);
+
+    // Calcular métricas de negocio
+    final totalEmpresas = empresas.length;
+    final clientesActivos = empresas.where((e) => e.estadoRelacion == EstadoRelacion.clienteActivo).length;
+    final prospectos = empresas.where((e) => e.estadoRelacion == EstadoRelacion.prospecto).length;
+    final enLicitacion = empresas.where((e) => e.estadoRelacion == EstadoRelacion.enLicitacion).length;
+    
+    final licitacionesGanadas = empresas.isNotEmpty 
+        ? (empresas.where((e) => e.estadoRelacion == EstadoRelacion.clienteActivo).length / totalEmpresas * 100).round()
+        : 0;
+    
+    final valorPipeline = empresas.fold<double>(0, (sum, empresa) {
+      if (empresa.estadoRelacion == EstadoRelacion.enLicitacion || 
+          empresa.estadoRelacion == EstadoRelacion.asesorado) {
+        return sum + 1; // Simplificado: cada oportunidad cuenta como 1 unidad
+      }
+      return sum;
+    });
+
+    // Crear mapa de empresas para exportación
+    final empresasMap = {for (var e in empresas) e.id: e.razonSocial};
 
     return Scaffold(
       appBar: AppBar(
@@ -20,6 +50,69 @@ class DashboardScreen extends ConsumerWidget {
           'Licitaciones & CRM',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (choice) async {
+              switch (choice) {
+                case 'export_empresas':
+                  await ExportService.exportEmpresasToCSV(empresas);
+                  break;
+                case 'export_licitaciones':
+                  await ExportService.exportLicitacionesToCSV(proximasLicitaciones, empresasMap);
+                  break;
+                case 'export_visitas':
+                  await ExportService.exportVisitasToCSV(visitas, empresasMap);
+                  break;
+                case 'export_tareas':
+                  await ExportService.exportTareasToCSV(tareas, empresasMap);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export_empresas',
+                child: Row(
+                  children: [
+                    Icon(Icons.business, size: 18),
+                    SizedBox(width: 8),
+                    Text('Exportar Empresas'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'export_licitaciones',
+                child: Row(
+                  children: [
+                    Icon(Icons.assignment, size: 18),
+                    SizedBox(width: 8),
+                    Text('Exportar Licitaciones'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'export_visitas',
+                child: Row(
+                  children: [
+                    Icon(Icons.directions_walk, size: 18),
+                    SizedBox(width: 8),
+                    Text('Exportar Visitas'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'export_tareas',
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, size: 18),
+                    SizedBox(width: 8),
+                    Text('Exportar Tareas'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -41,7 +134,7 @@ class DashboardScreen extends ConsumerWidget {
                     child: _buildStatCard(
                       context,
                       title: 'Empresas',
-                      value: '${empresas.length}',
+                      value: '$totalEmpresas',
                       icon: Icons.business,
                       color: Colors.blue.shade800,
                     ),
@@ -50,32 +143,130 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: _buildStatCard(
                       context,
-                      title: 'Sucursales',
-                      value: '${establecimientos.length}',
-                      icon: Icons.storefront,
-                      color: Colors.teal.shade800,
+                      title: 'Clientes',
+                      value: '$clientesActivos',
+                      icon: Icons.handshake,
+                      color: Colors.green.shade800,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildStatCard(
-                context,
-                title: 'Licitaciones Activas / Próximas',
-                value: '${proximasLicitaciones.length}',
-                icon: Icons.notifications_active,
-                color: Colors.orange.shade800,
-                isFullWidth: true,
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      title: 'Prospectos',
+                      value: '$prospectos',
+                      icon: Icons.person_search,
+                      color: Colors.orange.shade800,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      title: 'En Licitación',
+                      value: '$enLicitacion',
+                      icon: Icons.gavel,
+                      color: Colors.purple.shade800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      title: 'Tasa Conversión',
+                      value: '$licitacionesGanadas%',
+                      icon: Icons.trending_up,
+                      color: Colors.teal.shade800,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      title: 'Pipeline',
+                      value: '$valorPipeline',
+                      icon: Icons.filter_list,
+                      color: Colors.indigo.shade800,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 24),
 
-              // 2. Sección de Alertas / Próximas Licitaciones
+              // 2. Alertas y Tareas Vencidas
+              if (tareasVencidas.isNotEmpty) ...[
+                Text(
+                  '⚠️ Tareas Vencidas',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade700,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: tareasVencidas.length > 3 ? 3 : tareasVencidas.length,
+                  itemBuilder: (context, index) {
+                    final tarea = tareasVencidas[index];
+                    final empresaNombre = nombreEmpresa(empresas, tarea.empresaId);
+                    return _buildTareaVencidaTile(context, tarea, empresaNombre);
+                  },
+                ),
+                if (tareasVencidas.length > 3)
+                  TextButton(
+                    onPressed: () {
+                      // Navegar a pantalla de tareas
+                    },
+                    child: Text('Ver ${tareasVencidas.length - 3} más'),
+                  ),
+                const SizedBox(height: 24),
+              ],
+
+              // 3. Próximas Visitas
+              if (proximasVisitas.isNotEmpty) ...[
+                Text(
+                  '📅 Próximas Visitas',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: proximasVisitas.length > 3 ? 3 : proximasVisitas.length,
+                  itemBuilder: (context, index) {
+                    final visita = proximasVisitas[index];
+                    final empresaNombre = nombreEmpresa(empresas, visita.empresaId);
+                    return _buildVisitaTile(context, visita, empresaNombre);
+                  },
+                ),
+                if (proximasVisitas.length > 3)
+                  TextButton(
+                    onPressed: () {
+                      // Navegar a pantalla de visitas
+                    },
+                    child: Text('Ver ${proximasVisitas.length - 3} más'),
+                  ),
+                const SizedBox(height: 24),
+              ],
+
+              // 4. Sección de Alertas / Próximas Licitaciones
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Próximas Licitaciones',
+                    '📜 Próximas Licitaciones',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -96,15 +287,8 @@ class DashboardScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final licitacion = proximasLicitaciones[index];
                     // Buscar empresa asociada
-                    final empresa = empresas.firstWhere(
-                      (e) => e.id == licitacion.empresaId,
-                      orElse: () => empresas.firstWhere(
-                        (e) => e.id == licitacion.empresaId,
-                        orElse: () => throw Exception('Empresa no encontrada'),
-                      ),
-                    );
-
-                    return _buildLicitacionTile(context, licitacion, empresa.razonSocial);
+                    final empresaNombre = nombreEmpresa(empresas, licitacion.empresaId);
+                    return _buildLicitacionTile(context, licitacion, empresaNombre);
                   },
                 ),
             ],
@@ -120,7 +304,6 @@ class DashboardScreen extends ConsumerWidget {
     required String value,
     required IconData icon,
     required Color color,
-    bool isFullWidth = false,
   }) {
     return Card(
       elevation: 2,
@@ -165,6 +348,43 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTareaVencidaTile(BuildContext context, dynamic tarea, String empresaNombre) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.red.shade300, width: 1.5),
+      ),
+      elevation: 2,
+      child: ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Colors.red,
+          child: Icon(Icons.warning, color: Colors.white),
+        ),
+        title: Text(tarea.titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('$empresaNombre • Venció ${formatFecha(tarea.fechaVencimiento)}'),
+        trailing: const Icon(Icons.chevron_right),
+      ),
+    );
+  }
+
+  Widget _buildVisitaTile(BuildContext context, dynamic visita, String empresaNombre) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
+      child: ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Colors.blue,
+          child: Icon(Icons.directions_walk, color: Colors.white),
+        ),
+        title: Text(empresaNombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('${labelTipoVisita(visita.tipoVisita)} • ${formatFecha(visita.proximaVisitaAgendada!)}'),
+        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }
@@ -237,7 +457,7 @@ class DashboardScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          licitacion.estado.name.toUpperCase(),
+                          labelEstadoLicitacion(licitacion.estado),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -257,7 +477,7 @@ class DashboardScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Límite: ${_formatFecha(licitacion.fechaLimiteEntrega)}',
+                        'Límite: ${formatFecha(licitacion.fechaLimiteEntrega)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: esAlerta && diasRestantes >= 0 ? Colors.red.shade800 : Colors.grey.shade700,
@@ -314,9 +534,5 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _formatFecha(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }

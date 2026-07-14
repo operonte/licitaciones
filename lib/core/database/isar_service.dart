@@ -3,6 +3,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../features/empresas/domain/models/empresa.dart';
 import '../../features/establecimientos/domain/models/establecimiento.dart';
 import '../../features/licitaciones/domain/models/licitacion.dart';
+import '../../features/visitas/domain/models/visita.dart';
+import '../../features/tareas/domain/models/tarea.dart';
 
 class IsarService {
   final Isar isar;
@@ -17,6 +19,8 @@ class IsarService {
         EmpresaSchema,
         EstablecimientoSchema,
         LicitacionSchema,
+        VisitaSchema,
+        TareaSchema,
       ],
       directory: dir.path,
     );
@@ -44,15 +48,27 @@ class IsarService {
     return await isar.empresas.where().findAll();
   }
 
-  /// Elimina una Empresa por su UUID (id String).
+  /// Elimina una Empresa y sus establecimientos y licitaciones asociados.
   Future<bool> eliminarEmpresaPorId(String id) async {
     final empresa = await obtenerEmpresaPorId(id);
-    if (empresa != null && empresa.localId != null) {
-      return await isar.writeTxn(() async {
-        return await isar.empresas.delete(empresa.localId!);
-      });
-    }
-    return false;
+    if (empresa == null || empresa.localId == null) return false;
+
+    final establecimientos = await obtenerEstablecimientosPorEmpresa(id);
+    final licitaciones = await obtenerLicitacionesPorEmpresa(id);
+
+    return await isar.writeTxn(() async {
+      for (final est in establecimientos) {
+        if (est.localId != null) {
+          await isar.establecimientos.delete(est.localId!);
+        }
+      }
+      for (final lic in licitaciones) {
+        if (lic.localId != null) {
+          await isar.licitacions.delete(lic.localId!);
+        }
+      }
+      return await isar.empresas.delete(empresa.localId!);
+    });
   }
 
   // ==========================================
@@ -124,6 +140,80 @@ class IsarService {
     if (licitacion != null && licitacion.localId != null) {
       return await isar.writeTxn(() async {
         return await isar.licitacions.delete(licitacion.localId!);
+      });
+    }
+    return false;
+  }
+
+  // ==========================================
+  // OPERACIONES CRUD: VISITA
+  // ==========================================
+
+  /// Guarda o actualiza una Visita en la base de datos local.
+  Future<void> guardarVisita(Visita visita) async {
+    await isar.writeTxn(() async {
+      await isar.visitas.put(visita);
+    });
+  }
+
+  /// Obtiene una Visita por su UUID (id String).
+  Future<Visita?> obtenerVisitaPorId(String id) async {
+    return await isar.visitas.filter().idEqualTo(id).findFirst();
+  }
+
+  /// Obtiene las Visitas pertenecientes a una Empresa específica.
+  Future<List<Visita>> obtenerVisitasPorEmpresa(String empresaId) async {
+    return await isar.visitas.filter().empresaIdEqualTo(empresaId).sortByFechaVisitaDesc().findAll();
+  }
+
+  /// Obtiene todas las Visitas almacenadas localmente.
+  Future<List<Visita>> obtenerTodasLasVisitas() async {
+    return await isar.visitas.where().sortByFechaVisitaDesc().findAll();
+  }
+
+  /// Elimina una Visita por su UUID (id String).
+  Future<bool> eliminarVisitaPorId(String id) async {
+    final visita = await obtenerVisitaPorId(id);
+    if (visita != null && visita.localId != null) {
+      return await isar.writeTxn(() async {
+        return await isar.visitas.delete(visita.localId!);
+      });
+    }
+    return false;
+  }
+
+  // ==========================================
+  // OPERACIONES CRUD: TAREA
+  // ==========================================
+
+  /// Guarda o actualiza una Tarea en la base de datos local.
+  Future<void> guardarTarea(Tarea tarea) async {
+    await isar.writeTxn(() async {
+      await isar.tareas.put(tarea);
+    });
+  }
+
+  /// Obtiene una Tarea por su UUID (id String).
+  Future<Tarea?> obtenerTareaPorId(String id) async {
+    return await isar.tareas.filter().idEqualTo(id).findFirst();
+  }
+
+  /// Obtiene las Tareas pertenecientes a una Empresa específica.
+  Future<List<Tarea>> obtenerTareasPorEmpresa(String empresaId) async {
+    return await isar.tareas.filter().empresaIdEqualTo(empresaId).sortByFechaVencimiento().findAll();
+  }
+
+  /// Obtiene todas las Tareas almacenadas localmente.
+  Future<List<Tarea>> obtenerTodasLasTareas() async {
+    return await isar.tareas.where().sortByFechaVencimiento().findAll();
+  }
+
+  /// Elimina una Tarea por su UUID (id String).
+  Future<bool> eliminarTareaPorId(String id) async {
+    final tarea = await obtenerTareaPorId(id);
+    if (tarea != null && tarea.localId != null) {
+      return await isar.writeTxn(() async {
+        return await isar.tareas.delete(tarea.localId!);
       });
     }
     return false;

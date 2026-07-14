@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/database/isar_service.dart';
 import 'core/database/database_provider.dart';
+import 'core/notifications/notification_service.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/empresas/presentation/screens/empresas_list_screen.dart';
 import 'features/licitaciones/presentation/screens/licitaciones_list_screen.dart';
+import 'features/visitas/presentation/screens/visitas_list_screen.dart';
+import 'features/tareas/presentation/screens/tareas_list_screen.dart';
 
 void main() async {
-  // Asegurar que las vinculaciones del framework estén inicializadas
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar la base de datos local Isar de manera asíncrona
+  await NotificationService().initialize();
+
   final isarService = await IsarService.inicializar();
 
   runApp(
@@ -61,6 +64,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     DashboardScreen(),
     EmpresasListScreen(),
+    VisitasListScreen(),
+    TareasListScreen(),
     LicitacionesListScreen(),
   ];
 
@@ -88,6 +93,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.business_outlined),
             selectedIcon: Icon(Icons.business),
             label: 'Empresas',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.directions_walk_outlined),
+            selectedIcon: Icon(Icons.directions_walk),
+            label: 'Visitas',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.check_circle_outline),
+            selectedIcon: Icon(Icons.check_circle),
+            label: 'Tareas',
           ),
           NavigationDestination(
             icon: Icon(Icons.assignment_outlined),

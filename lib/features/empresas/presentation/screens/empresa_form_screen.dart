@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/utils/enum_labels.dart';
 import '../providers/empresas_provider.dart';
 import '../../../establecimientos/presentation/providers/establecimientos_provider.dart';
 import '../../domain/models/empresa.dart';
@@ -8,7 +9,9 @@ import '../../../establecimientos/domain/models/establecimiento.dart';
 import '../../../establecimientos/domain/models/contacto.dart';
 
 class EmpresaFormScreen extends ConsumerStatefulWidget {
-  const EmpresaFormScreen({super.key});
+  final Empresa? empresa;
+
+  const EmpresaFormScreen({super.key, this.empresa});
 
   @override
   ConsumerState<EmpresaFormScreen> createState() => _EmpresaFormScreenState();
@@ -22,7 +25,10 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   final _razonSocialController = TextEditingController();
   final _rutController = TextEditingController();
   final _rubroController = TextEditingController();
+  final _notasController = TextEditingController();
   EstadoRelacion _estadoRelacionSelected = EstadoRelacion.prospecto;
+
+  bool get _editando => widget.empresa != null;
 
   // Contactos de Empresa (máximo 3)
   final List<Map<String, TextEditingController>> _contactosEmpresaControllers = [];
@@ -41,6 +47,22 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   @override
   void initState() {
     super.initState();
+    final e = widget.empresa;
+    if (e != null) {
+      _razonSocialController.text = e.razonSocial;
+      _rutController.text = e.rut;
+      _rubroController.text = e.rubro;
+      _notasController.text = e.notasVisita;
+      _estadoRelacionSelected = e.estadoRelacion;
+      for (final c in e.contactos) {
+        _contactosEmpresaControllers.add({
+          'nombre': TextEditingController(text: c.nombre ?? ''),
+          'cargo': TextEditingController(text: c.cargo ?? ''),
+          'telefono': TextEditingController(text: c.telefono ?? ''),
+          'email': TextEditingController(text: c.email ?? ''),
+        });
+      }
+    }
   }
 
   void _agregarNuevoContactoEmpresa() {
@@ -89,6 +111,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
     _razonSocialController.dispose();
     _rutController.dispose();
     _rubroController.dispose();
+    _notasController.dispose();
     _nombreSucursalController.dispose();
     _direccionController.dispose();
     _guardiasController.dispose();
@@ -104,7 +127,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   void _guardarFormulario() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final empresaId = _uuid.v4();
+    final empresaId = widget.empresa?.id ?? _uuid.v4();
 
     // Extraer contactos de empresa
     final contactosEmpresa = _contactosEmpresaControllers
@@ -119,19 +142,21 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
 
     // 1. Guardar Empresa con contactos
     final nuevaEmpresa = Empresa(
+      localId: widget.empresa?.localId,
       id: empresaId,
       razonSocial: _razonSocialController.text.trim(),
       rut: _rutController.text.trim(),
       rubro: _rubroController.text.trim(),
       estadoRelacion: _estadoRelacionSelected,
-      fechaRegistro: DateTime.now(),
+      fechaRegistro: widget.empresa?.fechaRegistro ?? DateTime.now(),
       contactos: contactosEmpresa,
+      notasVisita: _notasController.text.trim(),
     );
 
     await ref.read(empresasProvider.notifier).guardarEmpresa(nuevaEmpresa);
 
-    // 2. Guardar Establecimiento si está habilitado
-    if (_agregarSucursal) {
+    // 2. Guardar Establecimiento si está habilitado (solo en creación)
+    if (_agregarSucursal && !_editando) {
       final contactosList = _contactoControllers
           .where((controllers) => controllers['nombre']!.text.trim().isNotEmpty)
           .map((controllers) => Contacto(
@@ -169,7 +194,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrar Empresa'),
+        title: Text(_editando ? 'Editar Empresa' : 'Registrar Empresa'),
       ),
       body: Form(
         key: _formKey,
@@ -232,7 +257,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                       items: EstadoRelacion.values.map((estado) {
                         return DropdownMenuItem(
                           value: estado,
-                          child: Text(estado.name.toUpperCase()),
+                          child: Text(labelEstadoRelacion(estado)),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -362,7 +387,26 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
 
             const SizedBox(height: 16),
 
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextFormField(
+                  controller: _notasController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Notas de visita y seguimiento',
+                    hintText: 'Anota conversaciones, compromisos, próximos pasos...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             // Toggle para Sucursal
+            if (!_editando)
             SwitchListTile(
               title: const Text(
                 'Agregar Establecimiento (Sucursal) inicial',
@@ -553,9 +597,9 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text(
-                'GUARDAR EMPRESA',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              child: Text(
+                _editando ? 'ACTUALIZAR EMPRESA' : 'GUARDAR EMPRESA',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             const SizedBox(height: 40),

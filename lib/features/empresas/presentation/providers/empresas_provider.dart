@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database_provider.dart';
+import '../../../establecimientos/presentation/providers/establecimientos_provider.dart';
+import '../../../licitaciones/presentation/providers/licitaciones_provider.dart';
 import '../../domain/models/empresa.dart';
 
 class EmpresasNotifier extends StateNotifier<List<Empresa>> {
@@ -25,11 +27,13 @@ class EmpresasNotifier extends StateNotifier<List<Empresa>> {
     await cargarEmpresas();
   }
 
-  /// Elimina una empresa por su UUID.
+  /// Elimina una empresa y sus relaciones por su UUID.
   Future<void> eliminarEmpresa(String id) async {
     final service = ref.read(isarServiceProvider);
     await service.eliminarEmpresaPorId(id);
     await cargarEmpresas();
+    await ref.read(establecimientosProvider.notifier).cargarEstablecimientos();
+    await ref.read(licitacionesProvider.notifier).cargarLicitaciones();
   }
 }
 

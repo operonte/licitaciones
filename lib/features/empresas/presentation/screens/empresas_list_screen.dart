@@ -1,43 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/enum_labels.dart';
+import '../../../../core/widgets/contacto_actions.dart';
+import '../../../../core/utils/url_launcher_helper.dart';
 import '../providers/empresas_provider.dart';
 import '../../../establecimientos/presentation/providers/establecimientos_provider.dart';
 import 'empresa_form_screen.dart';
+import '../../../establecimientos/presentation/screens/establecimiento_form_screen.dart';
+import '../../../visitas/presentation/screens/visita_form_screen.dart';
+import '../../../tareas/presentation/screens/tarea_form_screen.dart';
 import '../../domain/models/empresa.dart';
 
-class EmpresasListScreen extends ConsumerWidget {
+class EmpresasListScreen extends ConsumerStatefulWidget {
   const EmpresasListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmpresasListScreen> createState() => _EmpresasListScreenState();
+}
+
+class _EmpresasListScreenState extends ConsumerState<EmpresasListScreen> {
+  String _busqueda = '';
+
+  @override
+  Widget build(BuildContext context) {
     final empresas = ref.watch(empresasProvider);
+    final filtradas = empresas.where((e) {
+      if (_busqueda.isEmpty) return true;
+      final q = _busqueda.toLowerCase();
+      return e.razonSocial.toLowerCase().contains(q) ||
+          e.rut.toLowerCase().contains(q) ||
+          e.rubro.toLowerCase().contains(q);
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Empresas Registradas',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Empresas Registradas', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: empresas.isEmpty
-          ? _buildEmptyState(context)
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: empresas.length,
-              itemBuilder: (context, index) {
-                final empresa = empresas[index];
-                return _buildEmpresaCard(context, ref, empresa);
-              },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Buscar por nombre, RUT o rubro...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (v) => setState(() => _busqueda = v),
             ),
+          ),
+          Expanded(
+            child: filtradas.isEmpty
+                ? _buildEmptyState(context)
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: filtradas.length,
+                    itemBuilder: (context, index) => _buildEmpresaCard(context, ref, filtradas[index]),
+                  ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const EmpresaFormScreen(),
-            ),
-          );
-        },
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EmpresaFormScreen())),
         label: const Text('Nueva Empresa'),
         icon: const Icon(Icons.add),
       ),
@@ -68,135 +92,133 @@ class EmpresasListScreen extends ConsumerWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ExpansionTile(
-        title: Text(
-          empresa.razonSocial,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        title: Text(empresa.razonSocial, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Text('RUT: ${empresa.rut} ', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                const Text(' • ', style: TextStyle(color: Colors.grey)),
-                Text(empresa.rubro, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
+            Text('RUT: ${empresa.rut} • ${empresa.rubro}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: stateColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                empresa.estadoRelacion.name.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: stateColor,
-                ),
-              ),
+              decoration: BoxDecoration(color: stateColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+              child: Text(labelEstadoRelacion(empresa.estadoRelacion),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: stateColor)),
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: () => _confirmarEliminacion(context, ref, empresa),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EmpresaFormScreen(empresa: empresa)),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () => _confirmarEliminacion(context, ref, empresa),
+            ),
+          ],
         ),
         childrenPadding: const EdgeInsets.all(16.0),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (empresa.notasVisita.isNotEmpty) ...[
+            const Text('Notas de visita', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 4),
+            Text(empresa.notasVisita, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+            const Divider(height: 16),
+          ],
+          if (empresa.contactos.isNotEmpty) ...[
+            const Text('Contactos empresa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ...empresa.contactos.map((c) => ContactoActions(contacto: c)),
+            const Divider(height: 16),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Establecimientos (${sucursales.length})',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              Text('Establecimientos (${sucursales.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => EstablecimientoFormScreen(empresaId: empresa.id)),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Agregar'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Historial de Visitas', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => VisitaFormScreen(empresaId: empresa.id)),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Nueva Visita'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Tareas', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TareaFormScreen(empresaId: empresa.id)),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Nueva Tarea'),
               ),
             ],
           ),
           const Divider(height: 16),
           if (sucursales.isEmpty)
-            const Text(
-              'No hay establecimientos registrados para esta empresa.',
-              style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic),
-            )
+            const Text('No hay establecimientos registrados.', style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic))
           else
             ...sucursales.map((sucursal) => Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Card(
-                    color: Colors.grey.shade50.withOpacity(0.03),
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(color: Colors.grey.shade300, width: 1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     elevation: 0,
+                    shape: RoundedRectangleBorder(side: BorderSide(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                sucursal.nombreSucursal,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              Expanded(child: Text(sucursal.nombreSucursal, style: const TextStyle(fontWeight: FontWeight.bold))),
+                              IconButton(
+                                icon: const Icon(Icons.map, size: 18),
+                                tooltip: 'Abrir mapa',
+                                onPressed: () => abrirMapa(context, sucursal.direccion),
                               ),
-                              Row(
-                                children: [
-                                  const Icon(Icons.security, size: 14, color: Colors.grey),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${sucursal.cantidadGuardiasEstimados} guardias',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  sucursal.direccion,
-                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 18),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => EstablecimientoFormScreen(empresaId: empresa.id, establecimiento: sucursal)),
                                 ),
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                onPressed: () => ref.read(establecimientosProvider.notifier).eliminarEstablecimiento(sucursal.id),
+                              ),
                             ],
                           ),
-                          if (sucursal.contactos.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Contactos:',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 4),
-                            ...sucursal.contactos.map((contacto) => Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.person_outline, size: 12, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          '${contacto.nombre} (${contacto.cargo}) - ${contacto.telefono} - ${contacto.email}',
-                                          style: const TextStyle(fontSize: 11, color: Colors.black54),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                          ],
+                          Text(sucursal.direccion, style: const TextStyle(fontSize: 12)),
+                          Text('${sucursal.cantidadGuardiasEstimados} guardias estimados', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ...sucursal.contactos.map((c) => ContactoActions(contacto: c)),
                         ],
                       ),
                     ),
@@ -212,12 +234,9 @@ class EmpresasListScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Empresa'),
-        content: Text('¿Está seguro de eliminar a "${empresa.razonSocial}"? Esto también eliminará sus sucursales y licitaciones asociadas.'),
+        content: Text('¿Eliminar "${empresa.razonSocial}" y sus sucursales y licitaciones asociadas?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCELAR'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () {
@@ -240,29 +259,10 @@ class EmpresasListScreen extends ConsumerWidget {
           children: [
             Icon(Icons.business_center_outlined, size: 80, color: Colors.grey.shade400),
             const SizedBox(height: 20),
-            Text(
-              'No hay empresas registradas',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Las asesorías de seguridad nos permiten auditar a los clientes y registrar sus datos para futuras prospecciones.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500),
-            ),
+            Text('No hay empresas registradas', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EmpresaFormScreen(),
-                  ),
-                );
-              },
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EmpresaFormScreen())),
               icon: const Icon(Icons.add),
               label: const Text('Registrar Primera Empresa'),
             ),

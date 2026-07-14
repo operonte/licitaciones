@@ -1,12 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database_provider.dart';
+import '../../../../core/notifications/notification_service.dart';
 import '../../domain/models/licitacion.dart';
 
 class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
   final Ref ref;
 
   LicitacionesNotifier(this.ref) : super([]) {
-    cargarLicitaciones();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await cargarLicitaciones();
+    await _reprogramarAlertas();
   }
 
   /// Carga todas las licitaciones desde Isar y las ordena cronológicamente.
@@ -23,6 +29,7 @@ class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
     final service = ref.read(isarServiceProvider);
     await service.guardarLicitacion(licitacion);
     await cargarLicitaciones();
+    await _reprogramarAlertas();
   }
 
   /// Elimina una licitación por su UUID.
@@ -30,6 +37,17 @@ class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
     final service = ref.read(isarServiceProvider);
     await service.eliminarLicitacionPorId(id);
     await cargarLicitaciones();
+    await _reprogramarAlertas();
+  }
+
+  Future<void> _reprogramarAlertas() async {
+    final visitas = await ref.read(isarServiceProvider).obtenerTodasLasVisitas();
+    final tareas = await ref.read(isarServiceProvider).obtenerTodasLasTareas();
+    await NotificationService().programarTodasLasAlertas(
+      licitaciones: state,
+      visitas: visitas,
+      tareas: tareas,
+    );
   }
 }
 
