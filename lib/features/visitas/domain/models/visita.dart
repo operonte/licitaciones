@@ -45,6 +45,9 @@ class Visita {
 
   final DateTime fechaRegistro;
 
+  final bool isSynced;
+  final DateTime updatedAt;
+
   Visita({
     this.localId,
     required this.id,
@@ -57,7 +60,41 @@ class Visita {
     this.proximaVisitaAgendada,
     this.compromisos = const [],
     required this.fechaRegistro,
+    this.isSynced = false,
+    required this.updatedAt,
   });
+
+  Visita copyWith({
+    Id? localId,
+    String? id,
+    String? empresaId,
+    DateTime? fechaVisita,
+    TipoVisita? tipoVisita,
+    String? notas,
+    List<String>? temasTratados,
+    ResultadoVisita? resultado,
+    DateTime? proximaVisitaAgendada,
+    List<String>? compromisos,
+    DateTime? fechaRegistro,
+    bool? isSynced,
+    DateTime? updatedAt,
+  }) {
+    return Visita(
+      localId: localId ?? this.localId,
+      id: id ?? this.id,
+      empresaId: empresaId ?? this.empresaId,
+      fechaVisita: fechaVisita ?? this.fechaVisita,
+      tipoVisita: tipoVisita ?? this.tipoVisita,
+      notas: notas ?? this.notas,
+      temasTratados: temasTratados ?? this.temasTratados,
+      resultado: resultado ?? this.resultado,
+      proximaVisitaAgendada: proximaVisitaAgendada ?? this.proximaVisitaAgendada,
+      compromisos: compromisos ?? this.compromisos,
+      fechaRegistro: fechaRegistro ?? this.fechaRegistro,
+      isSynced: isSynced ?? this.isSynced,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   factory Visita.fromJson(Map<String, dynamic> json) => Visita(
         localId: json['localId'] as int?,
@@ -85,6 +122,10 @@ class Visita {
                 .toList() ??
             [],
         fechaRegistro: DateTime.parse(json['fechaRegistro'] as String),
+        isSynced: json['isSynced'] as bool? ?? false,
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -99,5 +140,21 @@ class Visita {
         'proximaVisitaAgendada': proximaVisitaAgendada?.toIso8601String(),
         'compromisos': compromisos,
         'fechaRegistro': fechaRegistro.toIso8601String(),
+        'isSynced': isSynced,
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  Map<String, dynamic> toSupabaseJson() => {
+        'id': id,
+        'empresa_id': empresaId,
+        'fecha_visita': fechaVisita.toIso8601String(),
+        'tipo_visita': tipoVisita.name,
+        'notas': notas,
+        'temas_tratados': temasTratados,
+        'resultado': resultado.name,
+        'proxima_visita_agendada': proximaVisitaAgendada?.toIso8601String(),
+        'compromisos': compromisos,
+        'fecha_registro': fechaRegistro.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
       };
 }

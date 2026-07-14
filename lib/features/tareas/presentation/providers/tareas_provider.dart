@@ -23,6 +23,9 @@ class TareasNotifier extends StateNotifier<List<Tarea>> {
     await service.guardarTarea(tarea);
     await cargarTareas();
     await _reprogramarAlertas();
+
+    // Disparar sincronización de fondo
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   /// Elimina una tarea por su UUID.
@@ -31,6 +34,10 @@ class TareasNotifier extends StateNotifier<List<Tarea>> {
     await service.eliminarTareaPorId(id);
     await cargarTareas();
     await _reprogramarAlertas();
+
+    // Eliminar de Supabase de fondo
+    ref.read(supabaseClientProvider).from('tareas').delete().eq('id', id).catchError((_) {});
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   Future<void> _reprogramarAlertas() async {

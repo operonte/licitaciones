@@ -43,10 +43,20 @@ const EstablecimientoSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'nombreSucursal': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 5,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'nombreSucursal': PropertySchema(
+      id: 6,
       name: r'nombreSucursal',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 7,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _establecimientoEstimateSize,
@@ -127,7 +137,9 @@ void _establecimientoSerialize(
   writer.writeString(offsets[2], object.direccion);
   writer.writeString(offsets[3], object.empresaId);
   writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.nombreSucursal);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeString(offsets[6], object.nombreSucursal);
+  writer.writeDateTime(offsets[7], object.updatedAt);
 }
 
 Establecimiento _establecimientoDeserialize(
@@ -148,8 +160,10 @@ Establecimiento _establecimientoDeserialize(
     direccion: reader.readString(offsets[2]),
     empresaId: reader.readString(offsets[3]),
     id: reader.readString(offsets[4]),
+    isSynced: reader.readBoolOrNull(offsets[5]) ?? false,
     localId: id,
-    nombreSucursal: reader.readString(offsets[5]),
+    nombreSucursal: reader.readString(offsets[6]),
+    updatedAt: reader.readDateTime(offsets[7]),
   );
   return object;
 }
@@ -178,7 +192,11 @@ P _establecimientoDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 6:
       return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -978,6 +996,16 @@ extension EstablecimientoQueryFilter
   }
 
   QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
+      isSyncedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
       localIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1186,6 +1214,62 @@ extension EstablecimientoQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
+      updatedAtEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
+      updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
+      updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterFilterCondition>
+      updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension EstablecimientoQueryObject
@@ -1258,6 +1342,20 @@ extension EstablecimientoQuerySortBy
   }
 
   QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
       sortByNombreSucursal() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nombreSucursal', Sort.asc);
@@ -1268,6 +1366,20 @@ extension EstablecimientoQuerySortBy
       sortByNombreSucursalDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nombreSucursal', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1328,6 +1440,20 @@ extension EstablecimientoQuerySortThenBy
     });
   }
 
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy> thenByLocalId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'localId', Sort.asc);
@@ -1352,6 +1478,20 @@ extension EstablecimientoQuerySortThenBy
       thenByNombreSucursalDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nombreSucursal', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QAfterSortBy>
+      thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1387,10 +1527,24 @@ extension EstablecimientoQueryWhereDistinct
   }
 
   QueryBuilder<Establecimiento, Establecimiento, QDistinct>
+      distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QDistinct>
       distinctByNombreSucursal({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'nombreSucursal',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Establecimiento, Establecimiento, QDistinct>
+      distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1435,10 +1589,23 @@ extension EstablecimientoQueryProperty
     });
   }
 
+  QueryBuilder<Establecimiento, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<Establecimiento, String, QQueryOperations>
       nombreSucursalProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'nombreSucursal');
+    });
+  }
+
+  QueryBuilder<Establecimiento, DateTime, QQueryOperations>
+      updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

@@ -151,6 +151,8 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
       fechaRegistro: widget.empresa?.fechaRegistro ?? DateTime.now(),
       contactos: contactosEmpresa,
       notasVisita: _notasController.text.trim(),
+      isSynced: false,
+      updatedAt: DateTime.now(),
     );
 
     await ref.read(empresasProvider.notifier).guardarEmpresa(nuevaEmpresa);
@@ -174,6 +176,8 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
         direccion: _direccionController.text.trim(),
         cantidadGuardiasEstimados: int.tryParse(_guardiasController.text.trim()) ?? 0,
         contactos: contactosList,
+        isSynced: false,
+        updatedAt: DateTime.now(),
       );
 
       await ref.read(establecimientosProvider.notifier).guardarEstablecimiento(nuevoEstablecimiento);

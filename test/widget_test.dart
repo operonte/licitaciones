@@ -9,6 +9,8 @@ import 'package:licitaciones/core/database/isar_service.dart';
 import 'package:licitaciones/features/empresas/domain/models/empresa.dart';
 import 'package:licitaciones/features/establecimientos/domain/models/establecimiento.dart';
 import 'package:licitaciones/features/licitaciones/domain/models/licitacion.dart';
+import 'package:licitaciones/features/visitas/domain/models/visita.dart';
+import 'package:licitaciones/features/tareas/domain/models/tarea.dart';
 
 void main() {
   late Isar isar;
@@ -26,6 +28,8 @@ void main() {
         EmpresaSchema,
         EstablecimientoSchema,
         LicitacionSchema,
+        VisitaSchema,
+        TareaSchema,
       ],
       directory: tempDir.path,
     );

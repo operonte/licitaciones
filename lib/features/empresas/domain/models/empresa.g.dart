@@ -39,25 +39,35 @@ const EmpresaSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'notasVisita': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 4,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'notasVisita': PropertySchema(
+      id: 5,
       name: r'notasVisita',
       type: IsarType.string,
     ),
     r'razonSocial': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'razonSocial',
       type: IsarType.string,
     ),
     r'rubro': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'rubro',
       type: IsarType.string,
     ),
     r'rut': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'rut',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 9,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _empresaEstimateSize,
@@ -125,10 +135,12 @@ void _empresaSerialize(
   writer.writeByte(offsets[1], object.estadoRelacion.index);
   writer.writeDateTime(offsets[2], object.fechaRegistro);
   writer.writeString(offsets[3], object.id);
-  writer.writeString(offsets[4], object.notasVisita);
-  writer.writeString(offsets[5], object.razonSocial);
-  writer.writeString(offsets[6], object.rubro);
-  writer.writeString(offsets[7], object.rut);
+  writer.writeBool(offsets[4], object.isSynced);
+  writer.writeString(offsets[5], object.notasVisita);
+  writer.writeString(offsets[6], object.razonSocial);
+  writer.writeString(offsets[7], object.rubro);
+  writer.writeString(offsets[8], object.rut);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 Empresa _empresaDeserialize(
@@ -150,11 +162,13 @@ Empresa _empresaDeserialize(
             EstadoRelacion.prospecto,
     fechaRegistro: reader.readDateTime(offsets[2]),
     id: reader.readString(offsets[3]),
+    isSynced: reader.readBoolOrNull(offsets[4]) ?? false,
     localId: id,
-    notasVisita: reader.readStringOrNull(offsets[4]) ?? '',
-    razonSocial: reader.readString(offsets[5]),
-    rubro: reader.readString(offsets[6]),
-    rut: reader.readString(offsets[7]),
+    notasVisita: reader.readStringOrNull(offsets[5]) ?? '',
+    razonSocial: reader.readString(offsets[6]),
+    rubro: reader.readString(offsets[7]),
+    rut: reader.readString(offsets[8]),
+    updatedAt: reader.readDateTime(offsets[9]),
   );
   return object;
 }
@@ -183,13 +197,17 @@ P _empresaDeserializeProp<P>(
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -714,6 +732,16 @@ extension EmpresaQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'id',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
       ));
     });
   }
@@ -1308,6 +1336,59 @@ extension EmpresaQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> updatedAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension EmpresaQueryObject
@@ -1360,6 +1441,18 @@ extension EmpresaQuerySortBy on QueryBuilder<Empresa, Empresa, QSortBy> {
     });
   }
 
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByNotasVisita() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notasVisita', Sort.asc);
@@ -1407,6 +1500,18 @@ extension EmpresaQuerySortBy on QueryBuilder<Empresa, Empresa, QSortBy> {
       return query.addSortBy(r'rut', Sort.desc);
     });
   }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension EmpresaQuerySortThenBy
@@ -1444,6 +1549,18 @@ extension EmpresaQuerySortThenBy
   QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
     });
   }
 
@@ -1506,6 +1623,18 @@ extension EmpresaQuerySortThenBy
       return query.addSortBy(r'rut', Sort.desc);
     });
   }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension EmpresaQueryWhereDistinct
@@ -1526,6 +1655,12 @@ extension EmpresaQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'id', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
     });
   }
 
@@ -1554,6 +1689,12 @@ extension EmpresaQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'rut', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Empresa, Empresa, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1591,6 +1732,12 @@ extension EmpresaQueryProperty
     });
   }
 
+  QueryBuilder<Empresa, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<Empresa, String, QQueryOperations> notasVisitaProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notasVisita');
@@ -1612,6 +1759,12 @@ extension EmpresaQueryProperty
   QueryBuilder<Empresa, String, QQueryOperations> rutProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'rut');
+    });
+  }
+
+  QueryBuilder<Empresa, DateTime, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/database/isar_service.dart';
 import 'core/database/database_provider.dart';
 import 'core/notifications/notification_service.dart';
@@ -13,6 +14,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await NotificationService().initialize();
+
+  // Inicializar Supabase
+  try {
+    await Supabase.initialize(
+      url: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co'),
+      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key'),
+    );
+  } catch (e) {
+    debugPrint('Error al inicializar Supabase: $e');
+  }
 
   final isarService = await IsarService.inicializar();
 

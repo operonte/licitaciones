@@ -42,32 +42,42 @@ const VisitaSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'notas': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 5,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'notas': PropertySchema(
+      id: 6,
       name: r'notas',
       type: IsarType.string,
     ),
     r'proximaVisitaAgendada': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'proximaVisitaAgendada',
       type: IsarType.dateTime,
     ),
     r'resultado': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'resultado',
       type: IsarType.byte,
       enumMap: _VisitaresultadoEnumValueMap,
     ),
     r'temasTratados': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'temasTratados',
       type: IsarType.stringList,
     ),
     r'tipoVisita': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'tipoVisita',
       type: IsarType.byte,
       enumMap: _VisitatipoVisitaEnumValueMap,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 11,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _visitaEstimateSize,
@@ -161,11 +171,13 @@ void _visitaSerialize(
   writer.writeDateTime(offsets[2], object.fechaRegistro);
   writer.writeDateTime(offsets[3], object.fechaVisita);
   writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.notas);
-  writer.writeDateTime(offsets[6], object.proximaVisitaAgendada);
-  writer.writeByte(offsets[7], object.resultado.index);
-  writer.writeStringList(offsets[8], object.temasTratados);
-  writer.writeByte(offsets[9], object.tipoVisita.index);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeString(offsets[6], object.notas);
+  writer.writeDateTime(offsets[7], object.proximaVisitaAgendada);
+  writer.writeByte(offsets[8], object.resultado.index);
+  writer.writeStringList(offsets[9], object.temasTratados);
+  writer.writeByte(offsets[10], object.tipoVisita.index);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 Visita _visitaDeserialize(
@@ -180,16 +192,18 @@ Visita _visitaDeserialize(
     fechaRegistro: reader.readDateTime(offsets[2]),
     fechaVisita: reader.readDateTime(offsets[3]),
     id: reader.readString(offsets[4]),
+    isSynced: reader.readBoolOrNull(offsets[5]) ?? false,
     localId: id,
-    notas: reader.readStringOrNull(offsets[5]) ?? '',
-    proximaVisitaAgendada: reader.readDateTimeOrNull(offsets[6]),
+    notas: reader.readStringOrNull(offsets[6]) ?? '',
+    proximaVisitaAgendada: reader.readDateTimeOrNull(offsets[7]),
     resultado:
-        _VisitaresultadoValueEnumMap[reader.readByteOrNull(offsets[7])] ??
+        _VisitaresultadoValueEnumMap[reader.readByteOrNull(offsets[8])] ??
             ResultadoVisita.interesado,
-    temasTratados: reader.readStringList(offsets[8]) ?? const [],
+    temasTratados: reader.readStringList(offsets[9]) ?? const [],
     tipoVisita:
-        _VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offsets[9])] ??
+        _VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offsets[10])] ??
             TipoVisita.primera,
+    updatedAt: reader.readDateTime(offsets[11]),
   );
   return object;
 }
@@ -212,17 +226,21 @@ P _visitaDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 6:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 8:
       return (_VisitaresultadoValueEnumMap[reader.readByteOrNull(offset)] ??
           ResultadoVisita.interesado) as P;
-    case 8:
-      return (reader.readStringList(offset) ?? const []) as P;
     case 9:
+      return (reader.readStringList(offset) ?? const []) as P;
+    case 10:
       return (_VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offset)] ??
           TipoVisita.primera) as P;
+    case 11:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1166,6 +1184,16 @@ extension VisitaQueryFilter on QueryBuilder<Visita, Visita, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Visita, Visita, QAfterFilterCondition> localIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1768,6 +1796,59 @@ extension VisitaQueryFilter on QueryBuilder<Visita, Visita, QFilterCondition> {
       ));
     });
   }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> updatedAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension VisitaQueryObject on QueryBuilder<Visita, Visita, QFilterCondition> {}
@@ -1823,6 +1904,18 @@ extension VisitaQuerySortBy on QueryBuilder<Visita, Visita, QSortBy> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Visita, Visita, QAfterSortBy> sortByNotas() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notas', Sort.asc);
@@ -1868,6 +1961,18 @@ extension VisitaQuerySortBy on QueryBuilder<Visita, Visita, QSortBy> {
   QueryBuilder<Visita, Visita, QAfterSortBy> sortByTipoVisitaDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tipoVisita', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1918,6 +2023,18 @@ extension VisitaQuerySortThenBy on QueryBuilder<Visita, Visita, QSortThenBy> {
   QueryBuilder<Visita, Visita, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
     });
   }
 
@@ -1980,6 +2097,18 @@ extension VisitaQuerySortThenBy on QueryBuilder<Visita, Visita, QSortThenBy> {
       return query.addSortBy(r'tipoVisita', Sort.desc);
     });
   }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension VisitaQueryWhereDistinct on QueryBuilder<Visita, Visita, QDistinct> {
@@ -2015,6 +2144,12 @@ extension VisitaQueryWhereDistinct on QueryBuilder<Visita, Visita, QDistinct> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<Visita, Visita, QDistinct> distinctByNotas(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2043,6 +2178,12 @@ extension VisitaQueryWhereDistinct on QueryBuilder<Visita, Visita, QDistinct> {
   QueryBuilder<Visita, Visita, QDistinct> distinctByTipoVisita() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'tipoVisita');
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -2084,6 +2225,12 @@ extension VisitaQueryProperty on QueryBuilder<Visita, Visita, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Visita, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<Visita, String, QQueryOperations> notasProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notas');
@@ -2112,6 +2259,12 @@ extension VisitaQueryProperty on QueryBuilder<Visita, Visita, QQueryProperty> {
   QueryBuilder<Visita, TipoVisita, QQueryOperations> tipoVisitaProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'tipoVisita');
+    });
+  }
+
+  QueryBuilder<Visita, DateTime, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

@@ -54,16 +54,26 @@ const TareaSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'prioridad': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 7,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'prioridad': PropertySchema(
+      id: 8,
       name: r'prioridad',
       type: IsarType.byte,
       enumMap: _TareaprioridadEnumValueMap,
     ),
     r'titulo': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'titulo',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 10,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _tareaEstimateSize,
@@ -146,8 +156,10 @@ void _tareaSerialize(
   writer.writeDateTime(offsets[4], object.fechaRegistro);
   writer.writeDateTime(offsets[5], object.fechaVencimiento);
   writer.writeString(offsets[6], object.id);
-  writer.writeByte(offsets[7], object.prioridad.index);
-  writer.writeString(offsets[8], object.titulo);
+  writer.writeBool(offsets[7], object.isSynced);
+  writer.writeByte(offsets[8], object.prioridad.index);
+  writer.writeString(offsets[9], object.titulo);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 Tarea _tareaDeserialize(
@@ -166,10 +178,12 @@ Tarea _tareaDeserialize(
     fechaRegistro: reader.readDateTime(offsets[4]),
     fechaVencimiento: reader.readDateTime(offsets[5]),
     id: reader.readString(offsets[6]),
+    isSynced: reader.readBoolOrNull(offsets[7]) ?? false,
     localId: id,
-    prioridad: _TareaprioridadValueEnumMap[reader.readByteOrNull(offsets[7])] ??
+    prioridad: _TareaprioridadValueEnumMap[reader.readByteOrNull(offsets[8])] ??
         PrioridadTarea.baja,
-    titulo: reader.readString(offsets[8]),
+    titulo: reader.readString(offsets[9]),
+    updatedAt: reader.readDateTime(offsets[10]),
   );
   return object;
 }
@@ -198,10 +212,14 @@ P _tareaDeserializeProp<P>(
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 8:
       return (_TareaprioridadValueEnumMap[reader.readByteOrNull(offset)] ??
           PrioridadTarea.baja) as P;
-    case 8:
+    case 9:
       return (reader.readString(offset)) as P;
+    case 10:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1172,6 +1190,16 @@ extension TareaQueryFilter on QueryBuilder<Tarea, Tarea, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Tarea, Tarea, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Tarea, Tarea, QAfterFilterCondition> localIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1421,6 +1449,59 @@ extension TareaQueryFilter on QueryBuilder<Tarea, Tarea, QFilterCondition> {
       ));
     });
   }
+
+  QueryBuilder<Tarea, Tarea, QAfterFilterCondition> updatedAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterFilterCondition> updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension TareaQueryObject on QueryBuilder<Tarea, Tarea, QFilterCondition> {}
@@ -1512,6 +1593,18 @@ extension TareaQuerySortBy on QueryBuilder<Tarea, Tarea, QSortBy> {
     });
   }
 
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByPrioridad() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'prioridad', Sort.asc);
@@ -1533,6 +1626,18 @@ extension TareaQuerySortBy on QueryBuilder<Tarea, Tarea, QSortBy> {
   QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByTituloDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'titulo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1622,6 +1727,18 @@ extension TareaQuerySortThenBy on QueryBuilder<Tarea, Tarea, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByLocalId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'localId', Sort.asc);
@@ -1655,6 +1772,18 @@ extension TareaQuerySortThenBy on QueryBuilder<Tarea, Tarea, QSortThenBy> {
   QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByTituloDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'titulo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1705,6 +1834,12 @@ extension TareaQueryWhereDistinct on QueryBuilder<Tarea, Tarea, QDistinct> {
     });
   }
 
+  QueryBuilder<Tarea, Tarea, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<Tarea, Tarea, QDistinct> distinctByPrioridad() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'prioridad');
@@ -1715,6 +1850,12 @@ extension TareaQueryWhereDistinct on QueryBuilder<Tarea, Tarea, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'titulo', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Tarea, Tarea, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1768,6 +1909,12 @@ extension TareaQueryProperty on QueryBuilder<Tarea, Tarea, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Tarea, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<Tarea, PrioridadTarea, QQueryOperations> prioridadProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'prioridad');
@@ -1777,6 +1924,12 @@ extension TareaQueryProperty on QueryBuilder<Tarea, Tarea, QQueryProperty> {
   QueryBuilder<Tarea, String, QQueryOperations> tituloProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'titulo');
+    });
+  }
+
+  QueryBuilder<Tarea, DateTime, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

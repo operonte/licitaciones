@@ -30,6 +30,9 @@ class Licitacion {
 
   final int diasAnticipacionAlerta;
 
+  final bool isSynced;
+  final DateTime updatedAt;
+
   Licitacion({
     this.localId,
     required this.id,
@@ -40,7 +43,37 @@ class Licitacion {
     this.presupuestoEstimado,
     required this.estado,
     required this.diasAnticipacionAlerta,
+    this.isSynced = false,
+    required this.updatedAt,
   });
+
+  Licitacion copyWith({
+    Id? localId,
+    String? id,
+    String? empresaId,
+    String? titulo,
+    DateTime? fechaPublicacion,
+    DateTime? fechaLimiteEntrega,
+    double? presupuestoEstimado,
+    EstadoLicitacion? estado,
+    int? diasAnticipacionAlerta,
+    bool? isSynced,
+    DateTime? updatedAt,
+  }) {
+    return Licitacion(
+      localId: localId ?? this.localId,
+      id: id ?? this.id,
+      empresaId: empresaId ?? this.empresaId,
+      titulo: titulo ?? this.titulo,
+      fechaPublicacion: fechaPublicacion ?? this.fechaPublicacion,
+      fechaLimiteEntrega: fechaLimiteEntrega ?? this.fechaLimiteEntrega,
+      presupuestoEstimado: presupuestoEstimado ?? this.presupuestoEstimado,
+      estado: estado ?? this.estado,
+      diasAnticipacionAlerta: diasAnticipacionAlerta ?? this.diasAnticipacionAlerta,
+      isSynced: isSynced ?? this.isSynced,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   factory Licitacion.fromJson(Map<String, dynamic> json) => Licitacion(
         localId: json['localId'] as int?,
@@ -57,6 +90,10 @@ class Licitacion {
           orElse: () => EstadoLicitacion.proxima,
         ),
         diasAnticipacionAlerta: json['diasAnticipacionAlerta'] as int,
+        isSynced: json['isSynced'] as bool? ?? false,
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -69,5 +106,19 @@ class Licitacion {
         'presupuestoEstimado': presupuestoEstimado,
         'estado': estado.name,
         'diasAnticipacionAlerta': diasAnticipacionAlerta,
+        'isSynced': isSynced,
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  Map<String, dynamic> toSupabaseJson() => {
+        'id': id,
+        'empresa_id': empresaId,
+        'titulo': titulo,
+        'fecha_publicacion': fechaPublicacion.toIso8601String(),
+        'fecha_limite_entrega': fechaLimiteEntrega.toIso8601String(),
+        'presupuesto_estimado': presupuestoEstimado,
+        'estado': estado.name,
+        'dias_anticipacion_alerta': diasAnticipacionAlerta,
+        'updated_at': updatedAt.toIso8601String(),
       };
 }

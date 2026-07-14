@@ -109,6 +109,8 @@ class _LicitacionFormScreenState extends ConsumerState<LicitacionFormScreen> {
           : null,
       estado: _estadoSelected,
       diasAnticipacionAlerta: int.tryParse(_diasAlertaController.text.trim()) ?? 7,
+      isSynced: false,
+      updatedAt: DateTime.now(),
     );
 
     await ref.read(licitacionesProvider.notifier).guardarLicitacion(nuevaLicitacion);

@@ -111,6 +111,8 @@ class _VisitaFormScreenState extends ConsumerState<VisitaFormScreen> {
       proximaVisitaAgendada: _proximaVisitaAgendada,
       compromisos: compromisos,
       fechaRegistro: widget.visita?.fechaRegistro ?? DateTime.now(),
+      isSynced: false,
+      updatedAt: DateTime.now(),
     );
 
     await ref.read(visitasProvider.notifier).guardarVisita(nuevaVisita);

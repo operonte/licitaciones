@@ -48,15 +48,25 @@ const LicitacionSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'presupuestoEstimado': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 6,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'presupuestoEstimado': PropertySchema(
+      id: 7,
       name: r'presupuestoEstimado',
       type: IsarType.double,
     ),
     r'titulo': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'titulo',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 9,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _licitacionEstimateSize,
@@ -124,8 +134,10 @@ void _licitacionSerialize(
   writer.writeDateTime(offsets[3], object.fechaLimiteEntrega);
   writer.writeDateTime(offsets[4], object.fechaPublicacion);
   writer.writeString(offsets[5], object.id);
-  writer.writeDouble(offsets[6], object.presupuestoEstimado);
-  writer.writeString(offsets[7], object.titulo);
+  writer.writeBool(offsets[6], object.isSynced);
+  writer.writeDouble(offsets[7], object.presupuestoEstimado);
+  writer.writeString(offsets[8], object.titulo);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 Licitacion _licitacionDeserialize(
@@ -142,9 +154,11 @@ Licitacion _licitacionDeserialize(
     fechaLimiteEntrega: reader.readDateTime(offsets[3]),
     fechaPublicacion: reader.readDateTime(offsets[4]),
     id: reader.readString(offsets[5]),
+    isSynced: reader.readBoolOrNull(offsets[6]) ?? false,
     localId: id,
-    presupuestoEstimado: reader.readDoubleOrNull(offsets[6]),
-    titulo: reader.readString(offsets[7]),
+    presupuestoEstimado: reader.readDoubleOrNull(offsets[7]),
+    titulo: reader.readString(offsets[8]),
+    updatedAt: reader.readDateTime(offsets[9]),
   );
   return object;
 }
@@ -170,9 +184,13 @@ P _licitacionDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 7:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -916,6 +934,16 @@ extension LicitacionQueryFilter
     });
   }
 
+  QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition> localIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1201,6 +1229,60 @@ extension LicitacionQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition> updatedAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition>
+      updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition> updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension LicitacionQueryObject
@@ -1288,6 +1370,18 @@ extension LicitacionQuerySortBy
     });
   }
 
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Licitacion, Licitacion, QAfterSortBy>
       sortByPresupuestoEstimado() {
     return QueryBuilder.apply(this, (query) {
@@ -1311,6 +1405,18 @@ extension LicitacionQuerySortBy
   QueryBuilder<Licitacion, Licitacion, QAfterSortBy> sortByTituloDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'titulo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1394,6 +1500,18 @@ extension LicitacionQuerySortThenBy
     });
   }
 
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByLocalId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'localId', Sort.asc);
@@ -1429,6 +1547,18 @@ extension LicitacionQuerySortThenBy
   QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByTituloDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'titulo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1475,6 +1605,12 @@ extension LicitacionQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Licitacion, Licitacion, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<Licitacion, Licitacion, QDistinct>
       distinctByPresupuestoEstimado() {
     return QueryBuilder.apply(this, (query) {
@@ -1486,6 +1622,12 @@ extension LicitacionQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'titulo', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Licitacion, Licitacion, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1538,6 +1680,12 @@ extension LicitacionQueryProperty
     });
   }
 
+  QueryBuilder<Licitacion, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<Licitacion, double?, QQueryOperations>
       presupuestoEstimadoProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1548,6 +1696,12 @@ extension LicitacionQueryProperty
   QueryBuilder<Licitacion, String, QQueryOperations> tituloProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'titulo');
+    });
+  }
+
+  QueryBuilder<Licitacion, DateTime, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

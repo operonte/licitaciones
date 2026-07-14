@@ -23,6 +23,9 @@ class VisitasNotifier extends StateNotifier<List<Visita>> {
     await service.guardarVisita(visita);
     await cargarVisitas();
     await _reprogramarAlertas();
+
+    // Disparar sincronización de fondo
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   /// Elimina una visita por su UUID.
@@ -31,6 +34,10 @@ class VisitasNotifier extends StateNotifier<List<Visita>> {
     await service.eliminarVisitaPorId(id);
     await cargarVisitas();
     await _reprogramarAlertas();
+
+    // Eliminar de Supabase de fondo
+    ref.read(supabaseClientProvider).from('visitas').delete().eq('id', id).catchError((_) {});
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   Future<void> _reprogramarAlertas() async {

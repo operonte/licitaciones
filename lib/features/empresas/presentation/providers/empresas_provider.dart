@@ -25,6 +25,9 @@ class EmpresasNotifier extends StateNotifier<List<Empresa>> {
     final service = ref.read(isarServiceProvider);
     await service.guardarEmpresa(empresa);
     await cargarEmpresas();
+    
+    // Disparar sincronización de fondo
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   /// Elimina una empresa y sus relaciones por su UUID.
@@ -34,6 +37,10 @@ class EmpresasNotifier extends StateNotifier<List<Empresa>> {
     await cargarEmpresas();
     await ref.read(establecimientosProvider.notifier).cargarEstablecimientos();
     await ref.read(licitacionesProvider.notifier).cargarLicitaciones();
+    
+    // Eliminar de Supabase de fondo
+    ref.read(supabaseClientProvider).from('empresas').delete().eq('id', id).catchError((_) {});
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 }
 

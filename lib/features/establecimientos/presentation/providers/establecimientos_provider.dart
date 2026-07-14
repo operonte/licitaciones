@@ -21,6 +21,9 @@ class EstablecimientosNotifier extends StateNotifier<List<Establecimiento>> {
     final service = ref.read(isarServiceProvider);
     await service.guardarEstablecimiento(est);
     await cargarEstablecimientos();
+
+    // Disparar sincronización de fondo
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 
   /// Elimina un establecimiento por su UUID.
@@ -28,6 +31,10 @@ class EstablecimientosNotifier extends StateNotifier<List<Establecimiento>> {
     final service = ref.read(isarServiceProvider);
     await service.eliminarEstablecimientoPorId(id);
     await cargarEstablecimientos();
+
+    // Eliminar de Supabase de fondo
+    ref.read(supabaseClientProvider).from('establecimientos').delete().eq('id', id).catchError((_) {});
+    ref.read(syncServiceProvider).syncAll().catchError((_) {});
   }
 }
 

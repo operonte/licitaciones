@@ -91,6 +91,8 @@ class _TareaFormScreenState extends ConsumerState<TareaFormScreen> {
       categoria: _categoriaSelected,
       estado: _estadoSelected,
       fechaRegistro: widget.tarea?.fechaRegistro ?? DateTime.now(),
+      isSynced: false,
+      updatedAt: DateTime.now(),
     );
 
     await ref.read(tareasProvider.notifier).guardarTarea(nuevaTarea);

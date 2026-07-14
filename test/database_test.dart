@@ -5,6 +5,8 @@ import 'package:licitaciones/features/empresas/domain/models/empresa.dart';
 import 'package:licitaciones/features/establecimientos/domain/models/establecimiento.dart';
 import 'package:licitaciones/features/establecimientos/domain/models/contacto.dart';
 import 'package:licitaciones/features/licitaciones/domain/models/licitacion.dart';
+import 'package:licitaciones/features/visitas/domain/models/visita.dart';
+import 'package:licitaciones/features/tareas/domain/models/tarea.dart';
 import 'package:licitaciones/core/database/isar_service.dart';
 
 void main() {
@@ -26,6 +28,7 @@ void main() {
         estadoRelacion: EstadoRelacion.prospecto,
         fechaRegistro: fecha,
         contactos: [contactoEmpresa],
+        updatedAt: fecha,
       );
 
       final json = empresa.toJson();
@@ -60,6 +63,7 @@ void main() {
         direccion: 'Av. Las Industrias 456',
         cantidadGuardiasEstimados: 12,
         contactos: [contacto],
+        updatedAt: DateTime.now(),
       );
 
       final json = establecimiento.toJson();
@@ -84,6 +88,7 @@ void main() {
         presupuestoEstimado: 150000.0,
         estado: EstadoLicitacion.activa,
         diasAnticipacionAlerta: 5,
+        updatedAt: DateTime.now(),
       );
 
       final json = licitacion.toJson();
@@ -115,6 +120,8 @@ void main() {
           EmpresaSchema,
           EstablecimientoSchema,
           LicitacionSchema,
+          VisitaSchema,
+          TareaSchema,
         ],
         directory: tempDir.path,
       );
@@ -144,6 +151,7 @@ void main() {
         estadoRelacion: EstadoRelacion.prospecto,
         fechaRegistro: DateTime.now(),
         contactos: [contactoEmpresa],
+        updatedAt: DateTime.now(),
       );
 
       // Create
@@ -167,6 +175,7 @@ void main() {
         estadoRelacion: EstadoRelacion.asesorado,
         fechaRegistro: obtenida.fechaRegistro,
         contactos: obtenida.contactos,
+        updatedAt: DateTime.now(),
       );
       await service.guardarEmpresa(empresaModificada);
 
@@ -200,6 +209,7 @@ void main() {
             email: 'carlos@guardia.cl',
           )
         ],
+        updatedAt: DateTime.now(),
       );
 
       final lic = Licitacion(
@@ -211,6 +221,7 @@ void main() {
         presupuestoEstimado: 50000.0,
         estado: EstadoLicitacion.proxima,
         diasAnticipacionAlerta: 10,
+        updatedAt: DateTime.now(),
       );
 
       // Guardar

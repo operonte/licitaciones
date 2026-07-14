@@ -50,6 +50,9 @@ class Tarea {
 
   final DateTime fechaRegistro;
 
+  final bool isSynced;
+  final DateTime updatedAt;
+
   Tarea({
     this.localId,
     required this.id,
@@ -61,7 +64,39 @@ class Tarea {
     required this.categoria,
     required this.estado,
     required this.fechaRegistro,
+    this.isSynced = false,
+    required this.updatedAt,
   });
+
+  Tarea copyWith({
+    Id? localId,
+    String? id,
+    String? empresaId,
+    String? titulo,
+    String? descripcion,
+    DateTime? fechaVencimiento,
+    PrioridadTarea? prioridad,
+    CategoriaTarea? categoria,
+    EstadoTarea? estado,
+    DateTime? fechaRegistro,
+    bool? isSynced,
+    DateTime? updatedAt,
+  }) {
+    return Tarea(
+      localId: localId ?? this.localId,
+      id: id ?? this.id,
+      empresaId: empresaId ?? this.empresaId,
+      titulo: titulo ?? this.titulo,
+      descripcion: descripcion ?? this.descripcion,
+      fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
+      prioridad: prioridad ?? this.prioridad,
+      categoria: categoria ?? this.categoria,
+      estado: estado ?? this.estado,
+      fechaRegistro: fechaRegistro ?? this.fechaRegistro,
+      isSynced: isSynced ?? this.isSynced,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   factory Tarea.fromJson(Map<String, dynamic> json) => Tarea(
         localId: json['localId'] as int?,
@@ -83,6 +118,10 @@ class Tarea {
           orElse: () => EstadoTarea.pendiente,
         ),
         fechaRegistro: DateTime.parse(json['fechaRegistro'] as String),
+        isSynced: json['isSynced'] as bool? ?? false,
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -96,5 +135,20 @@ class Tarea {
         'categoria': categoria.name,
         'estado': estado.name,
         'fechaRegistro': fechaRegistro.toIso8601String(),
+        'isSynced': isSynced,
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  Map<String, dynamic> toSupabaseJson() => {
+        'id': id,
+        'empresa_id': empresaId,
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'fecha_vencimiento': fechaVencimiento.toIso8601String(),
+        'prioridad': prioridad.name,
+        'categoria': categoria.name,
+        'estado': estado.name,
+        'fecha_registro': fechaRegistro.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
       };
 }

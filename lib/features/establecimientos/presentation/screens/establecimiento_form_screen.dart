@@ -100,6 +100,8 @@ class _EstablecimientoFormScreenState extends ConsumerState<EstablecimientoFormS
       direccion: _direccionController.text.trim(),
       cantidadGuardiasEstimados: int.tryParse(_guardiasController.text.trim()) ?? 0,
       contactos: contactos,
+      isSynced: false,
+      updatedAt: DateTime.now(),
     );
 
     await ref.read(establecimientosProvider.notifier).guardarEstablecimiento(est);
