@@ -2,6 +2,18 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [1.1.0] - 2026-07-13
+
+### Agregado
+- ✨ **Gestión de Contactos:** Registrar hasta 3 contactos por empresa
+- 📞 Campos: nombre, cargo/puesto, teléfono, email
+- 🎨 UI mejorada en formulario de empresas con sección dedicada a contactos
+- ⚡ Soporte para añadir/editar/eliminar contactos en tiempo real
+
+### Mejorado
+- Limpieza de código: eliminada pantalla innecesaria (Licitaciones ya ordena por fecha)
+- Validaciones mejoradas en formularios
+
 ## [0.1.0] - 2026-07-13
 
 ### Agregado
