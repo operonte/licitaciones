@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'about_screen.dart';
 
 /// Screen to manage application settings, themes, and external links.
@@ -13,6 +14,8 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final themeMode = ref.watch(themeProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
 
     // Fetch the Privacy Policy URL from environment variables, fallback to Cristian's Supabase bucket
     const privacyPolicyUrl = String.fromEnvironment(
@@ -27,7 +30,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
         children: [
-          // User profile placeholder (Fase 2 preview)
+          // Dynamic User Profile Card
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -41,7 +44,19 @@ class SettingsScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor: colorScheme.primaryContainer,
-                    child: Icon(Icons.person_outline, size: 28, color: colorScheme.onPrimaryContainer),
+                    backgroundImage: user?.userMetadata?['avatar_url'] != null
+                        ? NetworkImage(user!.userMetadata!['avatar_url'])
+                        : null,
+                    child: user?.userMetadata?['avatar_url'] == null
+                        ? Text(
+                            (user?.email ?? 'U')[0].toUpperCase(),
+                            style: TextStyle(
+                              color: colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -49,19 +64,50 @@ class SettingsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Cuenta Local',
+                          user?.userMetadata?['full_name'] ?? user?.email ?? 'Usuario',
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Inicia sesión para sincronizar y auditar quién realiza cada visita.',
+                          user?.email ?? 'Sesión iniciada',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
+                  if (user != null)
+                    IconButton(
+                      icon: const Icon(Icons.logout),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cerrar Sesión'),
+                            content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  ref.read(authProvider.notifier).signOut();
+                                  Navigator.pop(context); // Close dialog
+                                  Navigator.pop(context); // Close Settings screen
+                                },
+                                child: const Text('Cerrar Sesión'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),

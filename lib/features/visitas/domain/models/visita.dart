@@ -47,6 +47,9 @@ class Visita {
 
   final bool isSynced;
   final DateTime updatedAt;
+  
+  @Index()
+  final String? registradoPor; // Email or UID of the user who registered the visit
 
   Visita({
     this.localId,
@@ -62,6 +65,7 @@ class Visita {
     required this.fechaRegistro,
     this.isSynced = false,
     required this.updatedAt,
+    this.registradoPor,
   });
 
   Visita copyWith({
@@ -78,6 +82,7 @@ class Visita {
     DateTime? fechaRegistro,
     bool? isSynced,
     DateTime? updatedAt,
+    String? registradoPor,
   }) {
     return Visita(
       localId: localId ?? this.localId,
@@ -93,6 +98,7 @@ class Visita {
       fechaRegistro: fechaRegistro ?? this.fechaRegistro,
       isSynced: isSynced ?? this.isSynced,
       updatedAt: updatedAt ?? this.updatedAt,
+      registradoPor: registradoPor ?? this.registradoPor,
     );
   }
 
@@ -126,6 +132,7 @@ class Visita {
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : DateTime.now(),
+        registradoPor: json['registradoPor'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -142,6 +149,7 @@ class Visita {
         'fechaRegistro': fechaRegistro.toIso8601String(),
         'isSynced': isSynced,
         'updatedAt': updatedAt.toIso8601String(),
+        if (registradoPor != null) 'registradoPor': registradoPor,
       };
 
   Map<String, dynamic> toSupabaseJson() => {
@@ -156,5 +164,6 @@ class Visita {
         'compromisos': compromisos,
         'fecha_registro': fechaRegistro.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
+        if (registradoPor != null) 'registrado_por': registradoPor,
       };
 }

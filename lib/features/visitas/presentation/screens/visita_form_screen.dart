@@ -6,6 +6,7 @@ import '../../../../core/utils/enum_labels.dart';
 import '../providers/visitas_provider.dart';
 import '../../../empresas/presentation/providers/empresas_provider.dart';
 import '../../domain/models/visita.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class VisitaFormScreen extends ConsumerStatefulWidget {
   final Visita? visita;
@@ -99,6 +100,9 @@ class _VisitaFormScreenState extends ConsumerState<VisitaFormScreen> {
         .where((c) => c.isNotEmpty)
         .toList();
 
+    final authState = ref.read(authProvider);
+    final registradoPor = authState.user?.email ?? authState.user?.id;
+
     final nuevaVisita = Visita(
       localId: widget.visita?.localId,
       id: widget.visita?.id ?? _uuid.v4(),
@@ -113,6 +117,7 @@ class _VisitaFormScreenState extends ConsumerState<VisitaFormScreen> {
       fechaRegistro: widget.visita?.fechaRegistro ?? DateTime.now(),
       isSynced: false,
       updatedAt: DateTime.now(),
+      registradoPor: widget.visita?.registradoPor ?? registradoPor,
     );
 
     await ref.read(visitasProvider.notifier).guardarVisita(nuevaVisita);

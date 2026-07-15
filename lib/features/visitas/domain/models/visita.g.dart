@@ -57,25 +57,30 @@ const VisitaSchema = CollectionSchema(
       name: r'proximaVisitaAgendada',
       type: IsarType.dateTime,
     ),
-    r'resultado': PropertySchema(
+    r'registradoPor': PropertySchema(
       id: 8,
+      name: r'registradoPor',
+      type: IsarType.string,
+    ),
+    r'resultado': PropertySchema(
+      id: 9,
       name: r'resultado',
       type: IsarType.byte,
       enumMap: _VisitaresultadoEnumValueMap,
     ),
     r'temasTratados': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'temasTratados',
       type: IsarType.stringList,
     ),
     r'tipoVisita': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'tipoVisita',
       type: IsarType.byte,
       enumMap: _VisitatipoVisitaEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -124,6 +129,19 @@ const VisitaSchema = CollectionSchema(
           caseSensitive: false,
         )
       ],
+    ),
+    r'registradoPor': IndexSchema(
+      id: -5985303976935134743,
+      name: r'registradoPor',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'registradoPor',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
     )
   },
   links: {},
@@ -150,6 +168,12 @@ int _visitaEstimateSize(
   bytesCount += 3 + object.empresaId.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.notas.length * 3;
+  {
+    final value = object.registradoPor;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.temasTratados.length * 3;
   {
     for (var i = 0; i < object.temasTratados.length; i++) {
@@ -174,10 +198,11 @@ void _visitaSerialize(
   writer.writeBool(offsets[5], object.isSynced);
   writer.writeString(offsets[6], object.notas);
   writer.writeDateTime(offsets[7], object.proximaVisitaAgendada);
-  writer.writeByte(offsets[8], object.resultado.index);
-  writer.writeStringList(offsets[9], object.temasTratados);
-  writer.writeByte(offsets[10], object.tipoVisita.index);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeString(offsets[8], object.registradoPor);
+  writer.writeByte(offsets[9], object.resultado.index);
+  writer.writeStringList(offsets[10], object.temasTratados);
+  writer.writeByte(offsets[11], object.tipoVisita.index);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 Visita _visitaDeserialize(
@@ -196,14 +221,15 @@ Visita _visitaDeserialize(
     localId: id,
     notas: reader.readStringOrNull(offsets[6]) ?? '',
     proximaVisitaAgendada: reader.readDateTimeOrNull(offsets[7]),
+    registradoPor: reader.readStringOrNull(offsets[8]),
     resultado:
-        _VisitaresultadoValueEnumMap[reader.readByteOrNull(offsets[8])] ??
+        _VisitaresultadoValueEnumMap[reader.readByteOrNull(offsets[9])] ??
             ResultadoVisita.interesado,
-    temasTratados: reader.readStringList(offsets[9]) ?? const [],
+    temasTratados: reader.readStringList(offsets[10]) ?? const [],
     tipoVisita:
-        _VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offsets[10])] ??
+        _VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offsets[11])] ??
             TipoVisita.primera,
-    updatedAt: reader.readDateTime(offsets[11]),
+    updatedAt: reader.readDateTime(offsets[12]),
   );
   return object;
 }
@@ -232,14 +258,16 @@ P _visitaDeserializeProp<P>(
     case 7:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
       return (_VisitaresultadoValueEnumMap[reader.readByteOrNull(offset)] ??
           ResultadoVisita.interesado) as P;
-    case 9:
-      return (reader.readStringList(offset) ?? const []) as P;
     case 10:
+      return (reader.readStringList(offset) ?? const []) as P;
+    case 11:
       return (_VisitatipoVisitaValueEnumMap[reader.readByteOrNull(offset)] ??
           TipoVisita.primera) as P;
-    case 11:
+    case 12:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -595,6 +623,71 @@ extension VisitaQueryWhere on QueryBuilder<Visita, Visita, QWhereClause> {
         upper: [upperFechaVisita],
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterWhereClause> registradoPorIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'registradoPor',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterWhereClause> registradoPorIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'registradoPor',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterWhereClause> registradoPorEqualTo(
+      String? registradoPor) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'registradoPor',
+        value: [registradoPor],
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterWhereClause> registradoPorNotEqualTo(
+      String? registradoPor) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'registradoPor',
+              lower: [],
+              upper: [registradoPor],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'registradoPor',
+              lower: [registradoPor],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'registradoPor',
+              lower: [registradoPor],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'registradoPor',
+              lower: [],
+              upper: [registradoPor],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -1467,6 +1560,153 @@ extension VisitaQueryFilter on QueryBuilder<Visita, Visita, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'registradoPor',
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'registradoPor',
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'registradoPor',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'registradoPor',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'registradoPor',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition> registradoPorIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'registradoPor',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterFilterCondition>
+      registradoPorIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'registradoPor',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Visita, Visita, QAfterFilterCondition> resultadoEqualTo(
       ResultadoVisita value) {
     return QueryBuilder.apply(this, (query) {
@@ -1940,6 +2180,18 @@ extension VisitaQuerySortBy on QueryBuilder<Visita, Visita, QSortBy> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByRegistradoPor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'registradoPor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> sortByRegistradoPorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'registradoPor', Sort.desc);
+    });
+  }
+
   QueryBuilder<Visita, Visita, QAfterSortBy> sortByResultado() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'resultado', Sort.asc);
@@ -2074,6 +2326,18 @@ extension VisitaQuerySortThenBy on QueryBuilder<Visita, Visita, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByRegistradoPor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'registradoPor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Visita, Visita, QAfterSortBy> thenByRegistradoPorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'registradoPor', Sort.desc);
+    });
+  }
+
   QueryBuilder<Visita, Visita, QAfterSortBy> thenByResultado() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'resultado', Sort.asc);
@@ -2163,6 +2427,14 @@ extension VisitaQueryWhereDistinct on QueryBuilder<Visita, Visita, QDistinct> {
     });
   }
 
+  QueryBuilder<Visita, Visita, QDistinct> distinctByRegistradoPor(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'registradoPor',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Visita, Visita, QDistinct> distinctByResultado() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'resultado');
@@ -2241,6 +2513,12 @@ extension VisitaQueryProperty on QueryBuilder<Visita, Visita, QQueryProperty> {
       proximaVisitaAgendadaProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'proximaVisitaAgendada');
+    });
+  }
+
+  QueryBuilder<Visita, String?, QQueryOperations> registradoPorProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'registradoPor');
     });
   }
 

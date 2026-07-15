@@ -11,6 +11,8 @@ import 'package:licitaciones/features/establecimientos/domain/models/establecimi
 import 'package:licitaciones/features/licitaciones/domain/models/licitacion.dart';
 import 'package:licitaciones/features/visitas/domain/models/visita.dart';
 import 'package:licitaciones/features/tareas/domain/models/tarea.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import 'package:licitaciones/features/auth/presentation/providers/auth_provider.dart';
 
 void main() {
   late Isar isar;
@@ -53,6 +55,22 @@ void main() {
       ProviderScope(
         overrides: [
           isarServiceProvider.overrideWithValue(service),
+          authProvider.overrideWith((ref) {
+            final notifier = AuthNotifier();
+            notifier.state = UserAuthState(
+              user: User(
+                id: 'dummy-uid',
+                appMetadata: const {},
+                userMetadata: const {
+                  'full_name': 'Cristian CRM Test',
+                  'avatar_url': 'https://example.com/avatar.png',
+                },
+                aud: 'authenticated',
+                createdAt: DateTime.now().toIso8601String(),
+              ),
+            );
+            return notifier;
+          }),
         ],
         child: const MyApp(),
       ),

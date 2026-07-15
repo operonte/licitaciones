@@ -12,6 +12,8 @@ import 'features/tareas/presentation/screens/tareas_list_screen.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +49,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
+    final authState = ref.watch(authProvider);
 
     return MaterialApp(
       title: 'Licitaciones CRM',
@@ -54,7 +57,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const MainNavigationScreen(),
+      home: authState.user == null ? const LoginScreen() : const MainNavigationScreen(),
     );
   }
 }

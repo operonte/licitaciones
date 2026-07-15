@@ -172,6 +172,18 @@ class _VisitasListScreenState extends ConsumerState<VisitasListScreen> {
                     'Visita: ${formatFecha(vis.fechaVisita)}',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                   ),
+                  if (vis.registradoPor != null) ...[
+                    const Spacer(),
+                    Icon(Icons.person_outline, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        vis.registradoPor!,
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               if (vis.proximaVisitaAgendada != null) ...[
