@@ -15,7 +15,7 @@ class LoginScreen extends ConsumerWidget {
 
     const privacyPolicyUrl = String.fromEnvironment(
       'PRIVACY_POLICY_URL',
-      defaultValue: 'https://kggcwobqdpygaxwzygqb.supabase.co/storage/v1/object/public/policies/politica_privacidad.html',
+      defaultValue: 'https://raw.githubusercontent.com/operonte/licitaciones/master/politica_privacidad.html',
     );
 
     // Show error message as a SnackBar if login fails
@@ -157,7 +157,23 @@ class LoginScreen extends ConsumerWidget {
                       ),
                     ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+
+                  // Skip login button
+                  TextButton(
+                    onPressed: () {
+                      ref.read(authProvider.notifier).skipLogin();
+                    },
+                    child: Text(
+                      'Continuar sin cuenta',
+                      style: TextStyle(
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
 
                   // Footer disclaimer linking to Privacy Policy
                   Wrap(

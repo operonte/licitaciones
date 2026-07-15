@@ -57,7 +57,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: authState.user == null ? const LoginScreen() : const MainNavigationScreen(),
+      home: authState.isAuthenticated ? const MainNavigationScreen() : const LoginScreen(),
     );
   }
 }

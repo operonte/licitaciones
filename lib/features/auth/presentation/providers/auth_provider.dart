@@ -8,14 +8,19 @@ class UserAuthState {
   final User? user;
   final bool isLoading;
   final String? errorMessage;
+  final bool isGuest;
 
-  UserAuthState({this.user, this.isLoading = false, this.errorMessage});
+  UserAuthState({this.user, this.isLoading = false, this.errorMessage, this.isGuest = false});
 
-  UserAuthState copyWith({User? user, bool? isLoading, String? errorMessage}) {
+  /// Whether the user is authenticated (either logged in or guest mode).
+  bool get isAuthenticated => user != null || isGuest;
+
+  UserAuthState copyWith({User? user, bool? isLoading, String? errorMessage, bool? isGuest}) {
     return UserAuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      isGuest: isGuest ?? this.isGuest,
     );
   }
 }
@@ -67,13 +72,21 @@ class AuthNotifier extends StateNotifier<UserAuthState> {
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
     try {
-      await Supabase.instance.client.auth.signOut();
-      try {
-        await GoogleSignIn.instance.signOut();
-      } catch (_) {}
+      if (!state.isGuest) {
+        await Supabase.instance.client.auth.signOut();
+        try {
+          await GoogleSignIn.instance.signOut();
+        } catch (_) {}
+      }
+      state = UserAuthState(); // Reset to logged-out state
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
+  }
+
+  /// Skip login and enter as guest.
+  void skipLogin() {
+    state = UserAuthState(isGuest: true);
   }
 }
 
