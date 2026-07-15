@@ -10,6 +10,7 @@ import '../../../visitas/presentation/providers/visitas_provider.dart';
 import '../../../tareas/presentation/providers/tareas_provider.dart';
 import '../../../licitaciones/domain/models/licitacion.dart';
 import '../../../empresas/domain/models/empresa.dart';
+import '../../../settings/presentation/screens/settings_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -51,6 +52,15 @@ class DashboardScreen extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (choice) async {

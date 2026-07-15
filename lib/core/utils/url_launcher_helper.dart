@@ -35,3 +35,14 @@ Future<void> abrirMapa(BuildContext context, String direccion) async {
     }
   }
 }
+
+Future<void> abrirWeb(BuildContext context, String url) async {
+  final uri = Uri.parse(url);
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el enlace web')),
+      );
+    }
+  }
+}
