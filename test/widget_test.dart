@@ -56,7 +56,7 @@ void main() {
         overrides: [
           isarServiceProvider.overrideWithValue(service),
           authProvider.overrideWith((ref) {
-            final notifier = AuthNotifier();
+            final notifier = AuthNotifier(ref);
             notifier.state = UserAuthState(
               user: User(
                 id: 'dummy-uid',

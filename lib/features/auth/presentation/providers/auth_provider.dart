@@ -2,6 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database_provider.dart';
+import '../../../empresas/presentation/providers/empresas_provider.dart';
+import '../../../establecimientos/presentation/providers/establecimientos_provider.dart';
+import '../../../licitaciones/presentation/providers/licitaciones_provider.dart';
+import '../../../visitas/presentation/providers/visitas_provider.dart';
+import '../../../tareas/presentation/providers/tareas_provider.dart';
 
 /// Class representing the state of the user authentication.
 class UserAuthState {
@@ -27,15 +33,45 @@ class UserAuthState {
 
 /// Notifier to handle authentication lifecycle with Google and Supabase.
 class AuthNotifier extends StateNotifier<UserAuthState> {
-  AuthNotifier() : super(UserAuthState()) {
+  final Ref ref;
+
+  AuthNotifier(this.ref) : super(UserAuthState()) {
     try {
-      state = UserAuthState(user: Supabase.instance.client.auth.currentUser);
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      state = UserAuthState(user: currentUser);
+      
+      if (currentUser != null) {
+        // Trigger background sync on startup if already logged in
+        Future.microtask(() => _triggerSync());
+      }
+
       // Listen to changes in Supabase authentication state
       Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-        state = UserAuthState(user: data.session?.user);
+        final previousUser = state.user;
+        final newUser = data.session?.user;
+        state = UserAuthState(user: newUser);
+
+        // If a user just logged in, trigger synchronization
+        if (previousUser == null && newUser != null) {
+          _triggerSync();
+        }
       });
     } catch (e) {
       debugPrint('Supabase initialization bypassed/failed (expected in tests): $e');
+    }
+  }
+
+  Future<void> _triggerSync() async {
+    try {
+      await ref.read(syncServiceProvider).syncAll();
+      // Reload all providers to pull local changes into state
+      await ref.read(empresasProvider.notifier).cargarEmpresas();
+      await ref.read(establecimientosProvider.notifier).cargarEstablecimientos();
+      await ref.read(licitacionesProvider.notifier).cargarLicitaciones();
+      await ref.read(visitasProvider.notifier).cargarVisitas();
+      await ref.read(tareasProvider.notifier).cargarTareas();
+    } catch (e) {
+      debugPrint('Error en la sincronización tras login/inicio: $e');
     }
   }
 
@@ -55,11 +91,7 @@ class AuthNotifier extends StateNotifier<UserAuthState> {
       );
 
       final googleUser = await GoogleSignIn.instance.authenticate();
-      if (googleUser == null) {
-        state = state.copyWith(isLoading: false);
-        return;
-      }
-      final googleAuth = await googleUser.authentication;
+      final googleAuth = googleUser.authentication;
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
@@ -99,5 +131,5 @@ class AuthNotifier extends StateNotifier<UserAuthState> {
 
 /// Provider to access authentication state and triggers.
 final authProvider = StateNotifierProvider<AuthNotifier, UserAuthState>((ref) {
-  return AuthNotifier();
+  return AuthNotifier(ref);
 });
