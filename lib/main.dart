@@ -23,8 +23,8 @@ void main() async {
   // Inicializar Supabase
   try {
     await Supabase.initialize(
-      url: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co'),
-      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key'),
+      url: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://kggcwobqdpygaxwzygqb.supabase.co'),
+      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZ2N3b2JxZHB5Z2F4d3p5Z3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5ODYyNzgsImV4cCI6MjA5OTU2MjI3OH0.OQQ6GwcPHTwFXN3756oO-g5OmFa_yJ4JSIJP6cZrHRY'),
     );
   } catch (e) {
     debugPrint('Error al inicializar Supabase: $e');

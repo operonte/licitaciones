@@ -43,7 +43,10 @@ class AuthNotifier extends StateNotifier<UserAuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true);
     try {
-      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      const webClientId = String.fromEnvironment(
+        'GOOGLE_WEB_CLIENT_ID',
+        defaultValue: '364331814995-3uq6g8il27b5uvtt450efqg8qnvkc7er.apps.googleusercontent.com',
+      );
 
       // Initialize GoogleSignIn singleton instance
       await GoogleSignIn.instance.initialize(
@@ -52,7 +55,11 @@ class AuthNotifier extends StateNotifier<UserAuthState> {
       );
 
       final googleUser = await GoogleSignIn.instance.authenticate();
-      final googleAuth = googleUser.authentication;
+      if (googleUser == null) {
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+      final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
