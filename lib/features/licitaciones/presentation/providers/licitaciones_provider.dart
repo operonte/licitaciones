@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database_provider.dart';
-import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/services/alert_scheduler_service.dart';
 import '../../domain/models/licitacion.dart';
 
 class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
@@ -12,7 +12,7 @@ class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
 
   Future<void> _init() async {
     await cargarLicitaciones();
-    await _reprogramarAlertas();
+    await ref.read(alertSchedulerServiceProvider).reprogramarAlertas();
   }
 
   /// Carga todas las licitaciones desde Isar y las ordena cronológicamente.
@@ -29,7 +29,7 @@ class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
     final service = ref.read(isarServiceProvider);
     await service.guardarLicitacion(licitacion);
     await cargarLicitaciones();
-    await _reprogramarAlertas();
+    await ref.read(alertSchedulerServiceProvider).reprogramarAlertas();
 
     // Disparar sincronización de fondo
     ref.read(syncServiceProvider).syncAll().catchError((_) {});
@@ -40,21 +40,11 @@ class LicitacionesNotifier extends StateNotifier<List<Licitacion>> {
     final service = ref.read(isarServiceProvider);
     await service.eliminarLicitacionPorId(id);
     await cargarLicitaciones();
-    await _reprogramarAlertas();
+    await ref.read(alertSchedulerServiceProvider).reprogramarAlertas();
 
     // Eliminar de Supabase de fondo
     ref.read(supabaseClientProvider).from('licitaciones').delete().eq('id', id).catchError((_) {});
     ref.read(syncServiceProvider).syncAll().catchError((_) {});
-  }
-
-  Future<void> _reprogramarAlertas() async {
-    final visitas = await ref.read(isarServiceProvider).obtenerTodasLasVisitas();
-    final tareas = await ref.read(isarServiceProvider).obtenerTodasLasTareas();
-    await NotificationService().programarTodasLasAlertas(
-      licitaciones: state,
-      visitas: visitas,
-      tareas: tareas,
-    );
   }
 }
 

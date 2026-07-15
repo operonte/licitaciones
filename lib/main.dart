@@ -10,6 +10,8 @@ import 'features/licitaciones/presentation/screens/licitaciones_list_screen.dart
 import 'features/visitas/presentation/screens/visitas_list_screen.dart';
 import 'features/tareas/presentation/screens/tareas_list_screen.dart';
 
+import 'core/theme/app_theme.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -46,17 +48,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Licitaciones CRM',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F2027), // Tonalidad azul oscuro institucional premium
-          brightness: Brightness.light,
-        ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const MainNavigationScreen(),
     );
   }

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database_provider.dart';
-import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/services/alert_scheduler_service.dart';
 import '../../domain/models/tarea.dart';
 
 class TareasNotifier extends StateNotifier<List<Tarea>> {
@@ -22,7 +22,7 @@ class TareasNotifier extends StateNotifier<List<Tarea>> {
     final service = ref.read(isarServiceProvider);
     await service.guardarTarea(tarea);
     await cargarTareas();
-    await _reprogramarAlertas();
+    await ref.read(alertSchedulerServiceProvider).reprogramarAlertas();
 
     // Disparar sincronización de fondo
     ref.read(syncServiceProvider).syncAll().catchError((_) {});
@@ -33,21 +33,11 @@ class TareasNotifier extends StateNotifier<List<Tarea>> {
     final service = ref.read(isarServiceProvider);
     await service.eliminarTareaPorId(id);
     await cargarTareas();
-    await _reprogramarAlertas();
+    await ref.read(alertSchedulerServiceProvider).reprogramarAlertas();
 
     // Eliminar de Supabase de fondo
     ref.read(supabaseClientProvider).from('tareas').delete().eq('id', id).catchError((_) {});
     ref.read(syncServiceProvider).syncAll().catchError((_) {});
-  }
-
-  Future<void> _reprogramarAlertas() async {
-    final licitaciones = await ref.read(isarServiceProvider).obtenerTodasLasLicitaciones();
-    final visitas = await ref.read(isarServiceProvider).obtenerTodasLasVisitas();
-    await NotificationService().programarTodasLasAlertas(
-      licitaciones: licitaciones,
-      visitas: visitas,
-      tareas: state,
-    );
   }
 }
 
