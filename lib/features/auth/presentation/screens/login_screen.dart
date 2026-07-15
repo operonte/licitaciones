@@ -15,7 +15,7 @@ class LoginScreen extends ConsumerWidget {
 
     const privacyPolicyUrl = String.fromEnvironment(
       'PRIVACY_POLICY_URL',
-      defaultValue: 'https://kggcwobqdpygaxwzygqb.supabase.co/storage/v1/object/public/policies/politica_privacidad.html',
+      defaultValue: 'https://operonte.github.io/licitaciones/politica_privacidad.html',
     );
 
     // Show error message as a SnackBar if login fails

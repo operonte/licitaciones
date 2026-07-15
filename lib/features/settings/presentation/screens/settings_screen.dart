@@ -20,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
     // Fetch the Privacy Policy URL from environment variables, fallback to Cristian's Supabase bucket
     const privacyPolicyUrl = String.fromEnvironment(
       'PRIVACY_POLICY_URL',
-      defaultValue: 'https://kggcwobqdpygaxwzygqb.supabase.co/storage/v1/object/public/policies/politica_privacidad.html',
+      defaultValue: 'https://operonte.github.io/licitaciones/politica_privacidad.html',
     );
 
     return Scaffold(
@@ -191,7 +191,7 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Text('Política de Privacidad'),
-                  subtitle: const Text('Publicada en Supabase Storage'),
+                  subtitle: const Text('Ver política de privacidad'),
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => abrirWeb(context, privacyPolicyUrl),
                 ),
