@@ -180,12 +180,14 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                     TextFormField(
                       controller: _razonSocialController,
+                      maxLength: 100,
                       decoration: const InputDecoration(
                         labelText: 'Razón Social *',
                         prefixIcon: Icon(Icons.business),
                         border: OutlineInputBorder(),
+                        counterText: "",
                       ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty ? 'Ingrese la razón social' : null,
@@ -193,21 +195,32 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _rutController,
+                      maxLength: 15,
                       decoration: const InputDecoration(
                         labelText: 'RUT o NIT *',
                         prefixIcon: Icon(Icons.badge),
                         border: OutlineInputBorder(),
+                        counterText: "",
                       ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty ? 'Ingrese el RUT o identificación' : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese el RUT o identificación';
+                        }
+                        if (!_validarRut(value)) {
+                          return 'Ingrese un RUT válido (ej: 12.345.678-K)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _rubroController,
+                      maxLength: 100,
                       decoration: const InputDecoration(
                         labelText: 'Rubro / Actividad *',
                         prefixIcon: Icon(Icons.category),
                         border: OutlineInputBorder(),
+                        counterText: "",
                       ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty ? 'Ingrese el rubro de la empresa' : null,
@@ -258,6 +271,7 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                 child: TextFormField(
                   controller: _notasController,
                   maxLines: 4,
+                  maxLength: 2000,
                   decoration: const InputDecoration(
                     labelText: 'Notas de visita y seguimiento',
                     hintText: 'Anota conversaciones, compromisos, próximos pasos...',
@@ -303,10 +317,12 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _nombreSucursalController,
+                        maxLength: 100,
                         decoration: const InputDecoration(
                           labelText: 'Nombre de la Sucursal *',
                           prefixIcon: Icon(Icons.storefront),
                           border: OutlineInputBorder(),
+                          counterText: "",
                         ),
                         validator: (value) => _agregarSucursal && (value == null || value.trim().isEmpty)
                             ? 'Ingrese el nombre de la sucursal'
@@ -315,10 +331,12 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _direccionController,
+                        maxLength: 200,
                         decoration: const InputDecoration(
                           labelText: 'Dirección Completa *',
                           prefixIcon: Icon(Icons.location_on),
                           border: OutlineInputBorder(),
+                          counterText: "",
                         ),
                         validator: (value) => _agregarSucursal && (value == null || value.trim().isEmpty)
                             ? 'Ingrese la dirección'
@@ -327,11 +345,13 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _guardiasController,
+                        maxLength: 5,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: 'Cantidad Guardias Estimados',
                           prefixIcon: Icon(Icons.security),
                           border: OutlineInputBorder(),
+                          counterText: "",
                         ),
                         validator: (value) {
                           if (_agregarSucursal && value != null && value.isNotEmpty) {
@@ -373,5 +393,35 @@ class _EmpresaFormScreenState extends ConsumerState<EmpresaFormScreen> {
         ),
       ),
     );
+  }
+
+  bool _validarRut(String rut) {
+    final cleanRut = rut.replaceAll('.', '').replaceAll('-', '').replaceAll(' ', '').toUpperCase();
+    if (cleanRut.length < 8 || cleanRut.length > 9) return false;
+    
+    final cuerpo = cleanRut.substring(0, cleanRut.length - 1);
+    final dv = cleanRut.substring(cleanRut.length - 1);
+    
+    final numCuerpo = int.tryParse(cuerpo);
+    if (numCuerpo == null) return false;
+    
+    int suma = 0;
+    int multiplicador = 2;
+    for (int i = cuerpo.length - 1; i >= 0; i--) {
+      suma += int.parse(cuerpo[i]) * multiplicador;
+      multiplicador = multiplicador == 7 ? 2 : multiplicador + 1;
+    }
+    
+    final esperado = 11 - (suma % 11);
+    String dvEsperado = '';
+    if (esperado == 11) {
+      dvEsperado = '0';
+    } else if (esperado == 10) {
+      dvEsperado = 'K';
+    } else {
+      dvEsperado = esperado.toString();
+    }
+    
+    return dv == dvEsperado;
   }
 }

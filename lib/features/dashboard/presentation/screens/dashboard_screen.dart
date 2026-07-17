@@ -11,6 +11,7 @@ import '../../../tareas/presentation/providers/tareas_provider.dart';
 import '../../../licitaciones/domain/models/licitacion.dart';
 import '../../../empresas/domain/models/empresa.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
+import '../../../../core/navigation/navigation_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -235,7 +236,7 @@ class DashboardScreen extends ConsumerWidget {
                 if (tareasVencidas.length > 3)
                   TextButton(
                     onPressed: () {
-                      // Navegar a pantalla de tareas
+                      ref.read(navigationIndexProvider.notifier).state = 3; // Index for Tareas tab
                     },
                     child: Text('Ver ${tareasVencidas.length - 3} más'),
                   ),
@@ -264,7 +265,7 @@ class DashboardScreen extends ConsumerWidget {
                 if (proximasVisitas.length > 3)
                   TextButton(
                     onPressed: () {
-                      // Navegar a pantalla de visitas
+                      ref.read(navigationIndexProvider.notifier).state = 2; // Index for Visitas tab
                     },
                     child: Text('Ver ${proximasVisitas.length - 3} más'),
                   ),

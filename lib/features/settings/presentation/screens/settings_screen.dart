@@ -20,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
     // Fetch the Privacy Policy URL from environment variables, fallback to Cristian's Supabase bucket
     const privacyPolicyUrl = String.fromEnvironment(
       'PRIVACY_POLICY_URL',
-      defaultValue: 'https://kggcwobqdpygaxwzygqb.supabase.co/functions/v1/privacy-policy',
+      defaultValue: 'https://cristianbravo-dev.web.app/privacy/licitaciones',
     );
 
     return Scaffold(
@@ -64,14 +64,14 @@ class SettingsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.userMetadata?['full_name'] ?? user?.email ?? 'Usuario',
+                          user?.userMetadata?['full_name'] ?? (authState.isGuest ? 'Invitado' : 'Usuario'),
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          user?.email ?? 'Sesión iniciada',
+                          user?.email ?? (authState.isGuest ? 'Sin cuenta (Modo local)' : 'Sesión iniciada'),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                           ),
@@ -81,15 +81,17 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (user != null)
+                  if (user != null || authState.isGuest)
                     IconButton(
                       icon: const Icon(Icons.logout),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Cerrar Sesión'),
-                            content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                            title: Text(authState.isGuest ? 'Salir del Modo Invitado' : 'Cerrar Sesión'),
+                            content: Text(authState.isGuest 
+                                ? '¿Deseas salir del modo invitado para iniciar sesión con una cuenta?' 
+                                : '¿Estás seguro de que deseas cerrar sesión?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
@@ -101,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
                                   Navigator.pop(context); // Close dialog
                                   Navigator.pop(context); // Close Settings screen
                                 },
-                                child: const Text('Cerrar Sesión'),
+                                child: Text(authState.isGuest ? 'Salir' : 'Cerrar Sesión'),
                               ),
                             ],
                           ),

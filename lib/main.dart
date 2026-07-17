@@ -14,6 +14,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'core/navigation/navigation_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,37 +63,31 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-class MainNavigationScreen extends StatefulWidget {
+
+class MainNavigationScreen extends ConsumerWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(navigationIndexProvider);
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
+    final List<Widget> screens = const [
+      DashboardScreen(),
+      EmpresasListScreen(),
+      VisitasListScreen(),
+      TareasListScreen(),
+      LicitacionesListScreen(),
+    ];
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    EmpresasListScreen(),
-    VisitasListScreen(),
-    TareasListScreen(),
-    LicitacionesListScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
+        index: selectedIndex,
+        children: screens,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
+        selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          ref.read(navigationIndexProvider.notifier).state = index;
         },
         destinations: const [
           NavigationDestination(
